@@ -95,6 +95,15 @@ def analyze():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+        
+@app.route('/check-ffmpeg')
+def check_ffmpeg():
+    import subprocess
+    try:
+        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
+        return f"<pre>{result.stdout}</pre>"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/download', methods=['GET'])
 def download():
