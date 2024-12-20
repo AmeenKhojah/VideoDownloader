@@ -1,8 +1,6 @@
 #!/bin/bash
-echo "Updating package list..."
-apt-get update
-
-echo "Installing FFmpeg..."
-apt-get install -y ffmpeg
-
-echo "FFmpeg installation complete!"
+echo "Starting FFmpeg installation..." > /app/ffmpeg_debug.log
+chmod +x ./install_ffmpeg.sh >> /app/ffmpeg_debug.log 2>&1
+apt-get update >> /app/ffmpeg_debug.log 2>&1
+apt-get install -y ffmpeg >> /app/ffmpeg_debug.log 2>&1
+echo "FFmpeg installation complete!" >> /app/ffmpeg_debug.log
