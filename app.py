@@ -104,6 +104,19 @@ def check_ffmpeg():
         return f"<pre>{result.stdout}</pre>"
     except Exception as e:
         return f"Error: {str(e)}"
+@app.route('/debug-filesystem')
+def debug_filesystem():
+    import os
+    ffmpeg_path = os.path.exists('/usr/bin/ffmpeg')  # Check FFmpeg
+    app_py_exists = os.path.exists('/app/app.py')  # Check app.py
+    files_in_root = os.listdir('/')  # Root directory
+    files_in_app = os.listdir('/app')  # Your working directory
+    return f"""
+        FFmpeg Exists: {ffmpeg_path}<br>
+        App.py Exists: {app_py_exists}<br>
+        Files in Root: {files_in_root}<br>
+        Files in /app: {files_in_app}
+    """
 
 @app.route('/download', methods=['GET'])
 def download():
