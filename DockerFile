@@ -1,8 +1,10 @@
 FROM python:3.11-slim
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y apt-transport-https ca-certificates  # Add this line first
 RUN apt-get update && apt-get install -y ffmpeg
+
+# Debugging: Print FFmpeg version and location after installation
+RUN ffmpeg -version && which ffmpeg
 
 # Set working directory
 WORKDIR /app
