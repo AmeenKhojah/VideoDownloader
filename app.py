@@ -2,6 +2,9 @@ import os
 import tempfile
 from flask import Flask, render_template, request, send_file, jsonify
 import yt_dlp
+import os
+
+
 
 app = Flask(__name__)
 
@@ -175,4 +178,5 @@ def download():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
+    port = int(os.environ.get("PORT", 5000))  # Use Railway's provided port
+    app.run(host="0.0.0.0", port=port)
