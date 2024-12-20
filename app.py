@@ -176,7 +176,8 @@ def download():
     except Exception as e:
         return f"Error downloading: {str(e)}", 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    import os
     port = int(os.environ.get("PORT", 5000))  # Use Railway's provided port
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=False)  # Ensure debug is off for deployment
+
