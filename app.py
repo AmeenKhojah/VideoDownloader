@@ -96,16 +96,7 @@ def analyze():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
         
-@app.route('/check-ffmpeg')
-def check_ffmpeg():
-    import subprocess
-    import os
-    paths_to_check = [
-        "/usr/bin/ffmpeg",
-        "/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-        "/app/ffmpeg"
-    ]
+
     available_paths = {path: os.path.exists(path) for path in paths_to_check}
     try:
         ffmpeg_path = next((path for path in paths_to_check if os.path.exists(path)), None)
@@ -116,19 +107,6 @@ def check_ffmpeg():
     except Exception as e:
         return f"Error: {str(e)}"
 
-@app.route('/debug-filesystem')
-def debug_filesystem():
-    import os
-    ffmpeg_path = os.path.exists('/usr/bin/ffmpeg')  # Check FFmpeg
-    app_py_exists = os.path.exists('/app/app.py')  # Check app.py
-    files_in_root = os.listdir('/')  # Root directory
-    files_in_app = os.listdir('/app')  # Your working directory
-    return f"""
-        FFmpeg Exists: {ffmpeg_path}<br>
-        App.py Exists: {app_py_exists}<br>
-        Files in Root: {files_in_root}<br>
-        Files in /app: {files_in_app}
-    """
 
 @app.route('/download', methods=['GET'])
 def download():
