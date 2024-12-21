@@ -49,7 +49,6 @@ def analyze():
                 vcodec = f.get('vcodec', 'none')
                 acodec = f.get('acodec', 'none')
                 height = f.get('height')
-
                 if isinstance(height, int) and height > 0:
                     resolution = f"{height}p"
                     tbr = f.get('tbr', 0.0) or 0.0
@@ -75,8 +74,6 @@ def analyze():
 
             # Combine progressive and separate
             chosen_formats = list(progressive_formats.values())
-
-            # Add separate videos (for merging) if not already available as progressive
             for res, vid in separate_videos.items():
                 if res not in progressive_formats:
                     chosen_formats.append(vid)
@@ -92,7 +89,6 @@ def analyze():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/download', methods=['GET'])
 def download():
@@ -112,7 +108,6 @@ def download():
             os.remove(file_path)
 
     if mode == 'audio':
-        # Download best audio and convert to MP3
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
@@ -126,12 +121,10 @@ def download():
         }
         ext = 'mp3'
     else:
-        # Video download
         if not format_id:
             return "No format_id provided for video download", 400
 
         if progressive:
-            # Progressive MP4, no merging needed
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
@@ -140,7 +133,6 @@ def download():
             }
             ext = 'mp4'
         else:
-            # Merging bestvideo(format_id)+bestaudio
             chosen_format = f"{format_id}+bestaudio"
             ydl_opts = {
                 'quiet': True,
@@ -174,9 +166,7 @@ def download():
     except Exception as e:
         return f"Error downloading: {str(e)}", 500
 
-
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5000))  # Railway or default port
-    # Debug=False ensures fewer logs on production
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
