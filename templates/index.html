@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <!-- Ensure responsiveness on mobile -->
+    <!-- Responsive meta tag -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Video Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -24,15 +24,14 @@
         </nav>
     </header>
 
-    <!-- Home Section -->
     <section class="home-section active" id="homeSection">
         <div class="home-content">
             <h2>Welcome!</h2>
-            <p>Download your favorite videos in multiple resolutions!</p>
+            <p>Download your favorite videos in multiple resolutions. If high resolutions require merging, ffmpeg is used. MP3 downloads are also available.</p>
+            <p>Ensure ffmpeg is installed to avoid errors.</p>
         </div>
     </section>
 
-    <!-- Instagram Section -->
     <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
         <p class="instruction">Enter the Instagram video URL below and click "Download".</p>
@@ -45,7 +44,6 @@
         <button class="back-btn" id="backFromInstagram">Back to Home</button>
     </section>
 
-    <!-- YouTube Section -->
     <section class="content-section" id="youtubeSection">
         <h2>Download from YouTube</h2>
         <p class="instruction">Enter the YouTube video URL below and click "Download".</p>
@@ -58,7 +56,6 @@
         <button class="back-btn" id="backFromYouTube">Back to Home</button>
     </section>
 
-    <!-- Script -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
