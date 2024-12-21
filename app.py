@@ -161,7 +161,20 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
-            return send_file(downloaded_file, as_attachment=True, download_name=f"{safe_title}.{ext}")
+            # Set mimetype explicitly
+            if ext == 'mp4':
+                mimetype = 'video/mp4'
+            elif ext == 'mp3':
+                mimetype = 'audio/mpeg'
+            else:
+                mimetype = None
+
+            return send_file(
+                downloaded_file, 
+                as_attachment=True, 
+                download_name=f"{safe_title}.{ext}",
+                mimetype=mimetype
+            )
 
     except Exception as e:
         return f"Error downloading: {str(e)}", 500
