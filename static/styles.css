@@ -6,7 +6,7 @@ html, body {
     overflow-x: hidden;
     font-family: 'Roboto', sans-serif;
     color: #fff;
-    background: #333; /* dark fallback */
+    background: #333;
     background: linear-gradient(135deg, #6C63FF, #B993D6, #8CA6DB);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
@@ -22,14 +22,13 @@ html, body {
     box-sizing: inherit;
 }
 
-/* Canvas behind everything */
 #bgCanvas {
     position: fixed;
     top: 0; left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0; /* now 0 instead of -1 */
-    pointer-events: none; /* ensure it's not interactive */
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* HEADER */
@@ -42,7 +41,7 @@ header {
     padding: 15px 10px;
     backdrop-filter: blur(5px);
     position: relative;
-    z-index: 1; /* above the canvas */
+    z-index: 1;
     text-align: center;
 }
 
@@ -94,23 +93,21 @@ header {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* SECTIONS */
+/* SECTION TRANSITIONS */
 section {
-    width: 100%;
-    box-sizing: border-box;
-    display: none;
     opacity: 0;
     transform: translateY(20px);
-    transition: all 0.5s ease;
-    text-align: center;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    display: none; /* Start hidden */
     position: relative;
-    z-index: 1; /* above canvas */
+    z-index: 1;
     padding: 60px 20px;
     min-height: calc(100vh - 120px);
+    text-align: center;
 }
 
 section.active {
-    display: block;
+    display: block; /* When active, show */
     opacity: 1;
     transform: translateY(0);
 }
@@ -120,14 +117,6 @@ section.active {
     margin-bottom: 20px;
     font-weight: 400;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.home-section .home-content p {
-    font-size: 1.1em;
-    max-width: 500px;
-    margin: 0 auto;
-    line-height: 1.5;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .content-section h2 {
