@@ -22,12 +22,14 @@ html, body {
     box-sizing: inherit;
 }
 
+/* Canvas behind everything */
 #bgCanvas {
     position: fixed;
     top: 0; left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    z-index: 0; /* now 0 instead of -1 */
+    pointer-events: none; /* ensure it's not interactive */
 }
 
 /* HEADER */
@@ -39,8 +41,8 @@ header {
     background: rgba(0,0,0,0.3);
     padding: 15px 10px;
     backdrop-filter: blur(5px);
-    z-index: 10;
     position: relative;
+    z-index: 1; /* above the canvas */
     text-align: center;
 }
 
@@ -102,9 +104,9 @@ section {
     transition: all 0.5s ease;
     text-align: center;
     position: relative;
-    z-index: 1;
+    z-index: 1; /* above canvas */
     padding: 60px 20px;
-    min-height: calc(100vh - 120px); /* ensure enough height */
+    min-height: calc(100vh - 120px);
 }
 
 section.active {
