@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Ensure consistent transitions for all sections
     function showSection(sectionToShow) {
         const sections = [homeSection, instagramSection, youtubeSection];
         sections.forEach(sec => {
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else {
                 sec.classList.remove('active');
+                // After the transition ends (0.5s), hide the section if not active
                 setTimeout(() => {
                     if (!sec.classList.contains('active')) {
                         sec.style.display = 'none';
@@ -241,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             p.x += p.vx;
             p.y += p.vy;
 
-            // Bounce off edges
+            // Bounce at edges
             if (p.x < 0 || p.x > width) p.vx = -p.vx;
             if (p.y < 0 || p.y > height) p.vy = -p.vy;
 
