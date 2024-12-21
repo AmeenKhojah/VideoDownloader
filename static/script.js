@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="download-card">
                     <h3>${f.resolution} MP4</h3>
                     <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload('${url}','${f.format_id}','video', ${progressive})">MP4 ${f.resolution}</button>
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','${f.format_id}','video', ${progressive})">Download MP4 ${f.resolution}</button>
                     </div>
                 </div>
             `;
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="download-card">
                     <h3>MP3 (Audio Only)</h3>
                     <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload('${url}','','audio', true)">MP3 Audio</button>
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','','audio', true)">Download MP3</button>
                     </div>
                 </div>
             `;
@@ -164,10 +164,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    window.initiateDownload = function(url, format_id, mode, progressive) {
+    window.initiateDownload = function(e, url, format_id, mode, progressive) {
         const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
-        // Open in a new tab to avoid replacing the current page
-        window.open(downloadUrl, '_blank');
+        const btn = e.target;
+        const originalText = btn.innerText;
+        btn.innerText = 'Downloading...';
+        btn.disabled = true;
+
+        // Fetch the file as a blob to keep the user on the same page
+        fetch(downloadUrl)
+        .then(response => {
+            if(!response.ok) throw new Error('Network response was not ok.');
+            // Try to extract filename from Content-Disposition
+            const cd = response.headers.get('Content-Disposition');
+            let filename = 'downloaded_file';
+            if(cd && cd.includes('filename=')) {
+                filename = cd.split('filename=')[1].replace(/["';]/g, '').trim();
+            }
+            return response.blob().then(blob => ({blob, filename}));
+        })
+        .then(({blob, filename}) => {
+            const downloadLink = document.createElement('a');
+            const objectUrl = URL.createObjectURL(blob);
+            downloadLink.href = objectUrl;
+            downloadLink.setAttribute('download', filename);
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            downloadLink.remove();
+            URL.revokeObjectURL(objectUrl);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        })
+        .catch(err => {
+            alert('Error downloading file: ' + err.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
     };
 
     // Particle Background
