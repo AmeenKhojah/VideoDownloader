@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"/>
+    <!-- Ensure responsiveness on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Video Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"/>
@@ -23,23 +24,36 @@
         </nav>
     </header>
 
-    <section id="homeSection" class="active">
-        <h2>Welcome to Video Downloader</h2>
-        <p>Download your favorite videos in multiple resolutions (MP4) or as MP3 audio.</p>
+    <section class="home-section active" id="homeSection">
+        <div class="home-content">
+            <h2>Welcome!</h2>
+            <p>Download your favorite videos in multiple resolutions. If high resolutions require merging, ffmpeg is used. MP3 downloads are also available.</p>
+            <p>Ensure ffmpeg is installed to avoid errors.</p>
+        </div>
     </section>
 
-    <section id="youtubeSection">
-        <h2>Download from YouTube</h2>
-        <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL..." />
-        <button id="youtubeAnalyze">Analyze</button>
-        <div id="youtubeResults"></div>
-    </section>
-
-    <section id="instagramSection">
+    <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
-        <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL..." />
-        <button id="instagramAnalyze">Analyze</button>
-        <div id="instagramResults"></div>
+        <p class="instruction">Enter the Instagram video URL below and click "Download".</p>
+        <div class="input-container">
+            <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL..."/>
+            <button class="analyze-btn" id="instagramAnalyzeBtn">Download</button>
+        </div>
+        <div id="instagramLoader" class="loader" style="display:none;"></div>
+        <div id="instagramResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
+        <button class="back-btn" id="backFromInstagram">Back to Home</button>
+    </section>
+
+    <section class="content-section" id="youtubeSection">
+        <h2>Download from YouTube</h2>
+        <p class="instruction">Enter the YouTube video URL below and click "Download".</p>
+        <div class="input-container">
+            <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL..."/>
+            <button class="analyze-btn" id="youtubeAnalyzeBtn">Download</button>
+        </div>
+        <div id="youtubeLoader" class="loader" style="display:none;"></div>
+        <div id="youtubeResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
+        <button class="back-btn" id="backFromYouTube">Back to Home</button>
     </section>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
