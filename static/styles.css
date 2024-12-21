@@ -319,3 +319,13 @@ section.active {
         font-size: 1.4em;
     }
 }
+
+footer {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.9em;
+    color: #fff;
+    opacity: 0.8;
+    position: relative;
+    z-index: 1;
+}
