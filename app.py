@@ -93,6 +93,7 @@ def analyze():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
@@ -168,13 +169,14 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
-            # We send the file normally, relying on the frontend fetch to handle blob download.
             return send_file(downloaded_file, as_attachment=True, download_name=f"{safe_title}.{ext}")
 
     except Exception as e:
         return f"Error downloading: {str(e)}", 500
 
+
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5000))  # Use Railway or default port
+    port = int(os.environ.get("PORT", 5000))  # Railway or default port
+    # Debug=False ensures fewer logs on production
     app.run(host="0.0.0.0", port=port, debug=False)
