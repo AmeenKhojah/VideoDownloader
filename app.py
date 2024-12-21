@@ -2,9 +2,6 @@ import os
 import tempfile
 from flask import Flask, render_template, request, send_file, jsonify
 import yt_dlp
-import os
-
-
 
 app = Flask(__name__)
 
@@ -95,40 +92,6 @@ def analyze():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        
-@app.route('/check-ffmpeg')
-def check_ffmpeg():
-    import subprocess
-    import os
-    paths_to_check = [
-        "/usr/bin/ffmpeg",
-        "/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-        "/app/ffmpeg"
-    ]
-    available_paths = {path: os.path.exists(path) for path in paths_to_check}
-    try:
-        ffmpeg_path = next((path for path in paths_to_check if os.path.exists(path)), None)
-        if not ffmpeg_path:
-            return f"FFmpeg not found in paths: {available_paths}"
-        result = subprocess.run([ffmpeg_path, "-version"], capture_output=True, text=True)
-        return f"<pre>FFmpeg Path: {ffmpeg_path}\n\n{result.stdout}</pre>"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-@app.route('/debug-filesystem')
-def debug_filesystem():
-    import os
-    ffmpeg_path = os.path.exists('/usr/bin/ffmpeg')  # Check FFmpeg
-    app_py_exists = os.path.exists('/app/app.py')  # Check app.py
-    files_in_root = os.listdir('/')  # Root directory
-    files_in_app = os.listdir('/app')  # Your working directory
-    return f"""
-        FFmpeg Exists: {ffmpeg_path}<br>
-        App.py Exists: {app_py_exists}<br>
-        Files in Root: {files_in_root}<br>
-        Files in /app: {files_in_app}
-    """
 
 @app.route('/download', methods=['GET'])
 def download():
@@ -205,6 +168,7 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
+            # We send the file normally, relying on the frontend fetch to handle blob download.
             return send_file(downloaded_file, as_attachment=True, download_name=f"{safe_title}.{ext}")
 
     except Exception as e:
@@ -212,5 +176,5 @@ def download():
 
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 5000))  # Use Railway's provided port
-    app.run(host="0.0.0.0", port=port, debug=False)  # Ensure debug is off for deployment
+    port = int(os.environ.get("PORT", 5000))  # Use Railway or default port
+    app.run(host="0.0.0.0", port=port, debug=False)
