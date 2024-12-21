@@ -24,23 +24,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSection = homeSection;
 
+    // NAVIGATION TABS
     homeTab.addEventListener('click', () => {
         showSection(homeSection);
     });
-
     instagramTab.addEventListener('click', () => {
         resetInstagram();
         showSection(instagramSection);
     });
-
     youtubeTab.addEventListener('click', () => {
         resetYouTube();
         showSection(youtubeSection);
     });
 
+    // BACK BUTTONS
     backFromInstagram.addEventListener('click', () => showSection(homeSection));
     backFromYouTube.addEventListener('click', () => showSection(homeSection));
 
+    // ANALYZE BUTTONS
     instagramAnalyzeBtn.addEventListener('click', () => {
         const url = instagramUrlInput.value.trim();
         if(url) {
@@ -93,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubeResults.style.opacity = '0';
     }
 
+    // ANALYZE VIDEO (Fetch format info)
     function analyzeVideo(url, loader, results) {
         results.innerHTML = '';
         loader.style.display = 'block';
@@ -144,7 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="download-card">
                     <h3>${f.resolution} MP4</h3>
                     <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload(event, '${url}','${f.format_id}','video', ${progressive})">Download MP4 ${f.resolution}</button>
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','${f.format_id}','video', ${progressive})">
+                            Download MP4 ${f.resolution}
+                        </button>
                     </div>
                 </div>
             `;
@@ -155,7 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="download-card">
                     <h3>MP3 (Audio Only)</h3>
                     <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload(event, '${url}','','audio', true)">Download MP3</button>
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','','audio', true)">
+                            Download MP3
+                        </button>
                     </div>
                 </div>
             `;
@@ -164,34 +170,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
+    // INITIATE DOWNLOAD - fetch the file and trigger browser download
     window.initiateDownload = function(e, url, format_id, mode, progressive) {
         const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
+
         const btn = e.target;
         const originalText = btn.innerText;
         btn.innerText = 'Downloading...';
         btn.disabled = true;
 
-        // Fetch the file as a blob to keep the user on the same page
         fetch(downloadUrl)
         .then(response => {
             if(!response.ok) throw new Error('Network response was not ok.');
-            // Try to extract filename from Content-Disposition
+            // Extract filename from Content-Disposition if possible
             const cd = response.headers.get('Content-Disposition');
-            let filename = 'downloaded_file';
+            let filename = 'download';
             if(cd && cd.includes('filename=')) {
                 filename = cd.split('filename=')[1].replace(/["';]/g, '').trim();
             }
-            return response.blob().then(blob => ({blob, filename}));
+            return response.blob().then(blob => ({ blob, filename }));
         })
         .then(({blob, filename}) => {
-            const downloadLink = document.createElement('a');
+            const link = document.createElement('a');
             const objectUrl = URL.createObjectURL(blob);
-            downloadLink.href = objectUrl;
-            downloadLink.setAttribute('download', filename);
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            downloadLink.remove();
+            link.href = objectUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(objectUrl);
+
             btn.innerText = originalText;
             btn.disabled = false;
         })
@@ -202,13 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Particle Background
+    // PARTICLE BACKGROUND
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
 
     let width, height;
     let particles = [];
-    const particleCount = 50;
+    const particleCount = 40;
 
     function initCanvas() {
         width = window.innerWidth;
@@ -216,45 +224,46 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.width = width;
         canvas.height = height;
         particles = [];
-        for (let i=0; i<particleCount; i++){
+        for (let i = 0; i < particleCount; i++) {
             particles.push({
-                x: Math.random()*width,
-                y: Math.random()*height,
-                vx: (Math.random()-0.5)*0.5,
-                vy: (Math.random()-0.5)*0.5,
-                r: Math.random()*3+2
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                r: Math.random() * 3 + 2
             });
         }
     }
     window.addEventListener('resize', initCanvas);
     initCanvas();
 
-    let mouseX = width/2;
-    let mouseY = height/2;
-    canvas.addEventListener('mousemove', (e)=>{
+    let mouseX = width / 2;
+    let mouseY = height / 2;
+
+    canvas.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
     });
 
-    function animate(){
-        ctx.clearRect(0,0,width,height);
-        particles.forEach(p=>{
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach(p => {
             let dx = mouseX - p.x;
             let dy = mouseY - p.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if(dist < 150){
-                p.vx += dx/(150*150);
-                p.vy += dy/(150*150);
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150) {
+                p.vx += dx / (150 * 150);
+                p.vy += dy / (150 * 150);
             }
-
             p.x += p.vx;
             p.y += p.vy;
 
-            if(p.x < 0 || p.x > width) p.vx = -p.vx;
-            if(p.y < 0 || p.y > height) p.vy = -p.vy;
+            // bounce off edges
+            if (p.x < 0 || p.x > width) p.vx = -p.vx;
+            if (p.y < 0 || p.y > height) p.vy = -p.vy;
 
             ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(255,255,255,0.7)';
             ctx.fill();
         });
