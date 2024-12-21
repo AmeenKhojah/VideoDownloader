@@ -99,11 +99,23 @@ def analyze():
 @app.route('/check-ffmpeg')
 def check_ffmpeg():
     import subprocess
+    import os
+    paths_to_check = [
+        "/usr/bin/ffmpeg",
+        "/bin/ffmpeg",
+        "/usr/local/bin/ffmpeg",
+        "/app/ffmpeg"
+    ]
+    available_paths = {path: os.path.exists(path) for path in paths_to_check}
     try:
-        result = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True)
-        return f"<pre>{result.stdout}</pre>"
+        ffmpeg_path = next((path for path in paths_to_check if os.path.exists(path)), None)
+        if not ffmpeg_path:
+            return f"FFmpeg not found in paths: {available_paths}"
+        result = subprocess.run([ffmpeg_path, "-version"], capture_output=True, text=True)
+        return f"<pre>FFmpeg Path: {ffmpeg_path}\n\n{result.stdout}</pre>"
     except Exception as e:
         return f"Error: {str(e)}"
+
 @app.route('/debug-filesystem')
 def debug_filesystem():
     import os
