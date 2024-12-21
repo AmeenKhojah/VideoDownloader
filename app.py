@@ -21,7 +21,7 @@ def analyze():
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'skip_download': True
+        'skip_download': True,
     }
 
     try:
@@ -29,7 +29,7 @@ def analyze():
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
 
-            # Find best audio-only format for MP3 (We keep this logic the same)
+            # Check audio availability
             audio_format = None
             best_audio_bitrate = 0.0
             for f in formats:
@@ -39,8 +39,6 @@ def analyze():
                         best_audio_bitrate = abr
                         audio_format = f
 
-            # For the UI, we still provide format options, but during actual download,
-            # we will override them to ensure MP4 compatibility.
             progressive_formats = {}
             separate_videos = {}
             for f in formats:
@@ -52,7 +50,7 @@ def analyze():
                     resolution = f"{height}p"
                     tbr = f.get('tbr', 0.0) or 0.0
                     if (ext == 'mp4' and vcodec != 'none' and acodec != 'none' and '+' not in f.get('format_id', '')):
-                        # Progressive format
+                        # Progressive MP4
                         if (resolution not in progressive_formats) or (tbr > progressive_formats[resolution]['tbr']):
                             progressive_formats[resolution] = {
                                 'format_id': f['format_id'],
@@ -61,7 +59,6 @@ def analyze():
                                 'progressive': True
                             }
                     else:
-                        # Potential bestvideo
                         if vcodec != 'none' and acodec == 'none':
                             if (resolution not in separate_videos) or (tbr > separate_videos[resolution]['tbr']):
                                 separate_videos[resolution] = {
@@ -90,11 +87,7 @@ def analyze():
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
-    # Even though we get format_id from UI, we'll override for video to ensure compatibility.
-    requested_format_id = request.args.get('format_id', '').strip()
     mode = request.args.get('mode', '').strip()  # 'video' or 'audio'
-    progressive_str = request.args.get('progressive', 'true')
-    progressive = (progressive_str.lower() == 'true')
 
     if not url:
         return "No URL provided", 400
@@ -106,7 +99,7 @@ def download():
             os.remove(file_path)
 
     if mode == 'audio':
-        # Keep audio logic the same, producing MP3
+        # MP3 Audio
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
@@ -115,32 +108,24 @@ def download():
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
-                'preferredquality': '192'
+                'preferredquality': '192',
             }]
         }
         ext = 'mp3'
     else:
-        # For video: enforce a known good MP4 format (h264+aac) to ensure max compatibility
-        # We use bestvideo[ext=mp4]+bestaudio[ext=m4a] which yt-dlp should mux into a mp4 container.
-        # Add FFmpegVideoRemuxer to ensure proper MP4 formatting.
+        # Only download MP4 format without any post-processing for now
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',  # fallback if needed
-            'postprocessors': [
-                {
-                    'key': 'FFmpegVideoRemuxer',
-                    'preferredformat': 'mp4'
-                }
-            ]
+            'format': 'best[ext=mp4]',
         }
         ext = 'mp4'
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            title = info.get('title', 'video')
+            title = info.get('title', 'video') or 'video'
 
             downloaded_file = None
             for file in os.listdir(DOWNLOAD_DIR):
@@ -155,7 +140,7 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
-            # Set mimetype explicitly
+            # Set mimetype explicitly for iOS compatibility
             if ext == 'mp4':
                 mimetype = 'video/mp4'
             elif ext == 'mp3':
@@ -163,9 +148,10 @@ def download():
             else:
                 mimetype = None
 
+            # Send file with inline disposition for browser preview
             return send_file(
-                downloaded_file, 
-                as_attachment=True, 
+                downloaded_file,
+                as_attachment=False,
                 download_name=f"{safe_title}.{ext}",
                 mimetype=mimetype
             )
@@ -174,6 +160,6 @@ def download():
         return f"Error downloading: {str(e)}", 500
 
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
+    # Ensure ffmpeg is installed on your server (e.g., `sudo apt-get install ffmpeg`)
     app.run(host="0.0.0.0", port=port, debug=False)
