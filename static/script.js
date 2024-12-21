@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSection = homeSection;
 
-    // NAVIGATION TABS
+    // NAVIGATION
     homeTab.addEventListener('click', () => {
         showSection(homeSection);
     });
@@ -37,14 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showSection(youtubeSection);
     });
 
-    // BACK BUTTONS
     backFromInstagram.addEventListener('click', () => showSection(homeSection));
     backFromYouTube.addEventListener('click', () => showSection(homeSection));
 
     // ANALYZE BUTTONS
     instagramAnalyzeBtn.addEventListener('click', () => {
         const url = instagramUrlInput.value.trim();
-        if(url) {
+        if (url) {
             analyzeVideo(url, instagramLoader, instagramResults);
         } else {
             alert('Please enter a valid Instagram URL.');
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     youtubeAnalyzeBtn.addEventListener('click', () => {
         const url = youtubeUrlInput.value.trim();
-        if(url) {
+        if (url) {
             analyzeVideo(url, youtubeLoader, youtubeResults);
         } else {
             alert('Please enter a valid YouTube URL.');
@@ -71,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 sec.classList.remove('active');
                 setTimeout(() => {
-                    if(!sec.classList.contains('active')) {
+                    if (!sec.classList.contains('active')) {
                         sec.style.display = 'none';
                     }
                 }, 500);
@@ -94,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubeResults.style.opacity = '0';
     }
 
-    // ANALYZE VIDEO (Fetch format info)
+    // ANALYZE VIDEO
     function analyzeVideo(url, loader, results) {
         results.innerHTML = '';
         loader.style.display = 'block';
@@ -111,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             loader.style.display = 'none';
-            if(data.error) {
+            if (data.error) {
                 alert('Error: ' + data.error);
                 return;
             }
@@ -170,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // INITIATE DOWNLOAD - fetch the file and trigger browser download
+    // INITIATE DOWNLOAD
     window.initiateDownload = function(e, url, format_id, mode, progressive) {
         const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
 
@@ -182,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(downloadUrl)
         .then(response => {
             if(!response.ok) throw new Error('Network response was not ok.');
-            // Extract filename from Content-Disposition if possible
             const cd = response.headers.get('Content-Disposition');
             let filename = 'download';
             if(cd && cd.includes('filename=')) {
@@ -210,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // PARTICLE BACKGROUND
+    // PARTICLE BACKGROUND (No mouse attraction, just drifting)
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -228,37 +226,22 @@ document.addEventListener('DOMContentLoaded', () => {
             particles.push({
                 x: Math.random() * width,
                 y: Math.random() * height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
-                r: Math.random() * 3 + 2
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
+                r: Math.random() * 2.5 + 1.5
             });
         }
     }
     window.addEventListener('resize', initCanvas);
     initCanvas();
 
-    let mouseX = width / 2;
-    let mouseY = height / 2;
-
-    canvas.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
-
     function animate() {
         ctx.clearRect(0, 0, width, height);
         particles.forEach(p => {
-            let dx = mouseX - p.x;
-            let dy = mouseY - p.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 150) {
-                p.vx += dx / (150 * 150);
-                p.vy += dy / (150 * 150);
-            }
             p.x += p.vx;
             p.y += p.vy;
 
-            // bounce off edges
+            // Bounce off edges
             if (p.x < 0 || p.x > width) p.vx = -p.vx;
             if (p.y < 0 || p.y > height) p.vy = -p.vy;
 
