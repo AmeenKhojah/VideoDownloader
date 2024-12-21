@@ -23,6 +23,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const youtubeResults = document.getElementById('youtubeResults');
 
     let currentSection = homeSection;
+    currentSection.classList.add('active');
+    currentSection.style.display = 'block';
+
+    function showSection(sectionToShow) {
+        if (sectionToShow === currentSection) return;
+
+        // Fade out current section
+        if (currentSection) {
+            const oldSection = currentSection;
+            oldSection.classList.remove('active');
+
+            // When transition ends on old section, hide it
+            oldSection.addEventListener('transitionend', function onTransitionEnd() {
+                oldSection.removeEventListener('transitionend', onTransitionEnd);
+                oldSection.style.display = 'none';
+
+                // Now show the new section
+                sectionToShow.style.display = 'block';
+                requestAnimationFrame(() => {
+                    sectionToShow.classList.add('active');
+                });
+            }, { once: true });
+        } else {
+            // If no current section (first load)
+            sectionToShow.style.display = 'block';
+            requestAnimationFrame(() => {
+                sectionToShow.classList.add('active');
+            });
+        }
+
+        currentSection = sectionToShow;
+    }
 
     // NAVIGATION
     homeTab.addEventListener('click', () => {
@@ -58,28 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter a valid YouTube URL.');
         }
     });
-
-    // Ensure consistent transitions for all sections
-    function showSection(sectionToShow) {
-        const sections = [homeSection, instagramSection, youtubeSection];
-        sections.forEach(sec => {
-            if (sec === sectionToShow) {
-                sec.style.display = 'block';
-                requestAnimationFrame(() => {
-                    sec.classList.add('active');
-                });
-            } else {
-                sec.classList.remove('active');
-                // After the transition ends (0.5s), hide the section if not active
-                setTimeout(() => {
-                    if (!sec.classList.contains('active')) {
-                        sec.style.display = 'none';
-                    }
-                }, 500);
-            }
-        });
-        currentSection = sectionToShow;
-    }
 
     function resetInstagram() {
         instagramUrlInput.value = '';
@@ -171,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    // INITIATE DOWNLOAD
     window.initiateDownload = function(e, url, format_id, mode, progressive) {
         const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
 
