@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // PARTICLE BACKGROUND (No mouse attraction, just drifting)
+    // PARTICLE BACKGROUND
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
 
