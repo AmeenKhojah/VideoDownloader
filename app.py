@@ -21,7 +21,7 @@ def analyze():
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'skip_download': True,
+        'skip_download': True
     }
 
     try:
@@ -29,7 +29,7 @@ def analyze():
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
 
-            # Find best audio-only format for MP3
+            # Find best audio-only format for MP3 (We keep this logic the same)
             audio_format = None
             best_audio_bitrate = 0.0
             for f in formats:
@@ -39,11 +39,10 @@ def analyze():
                         best_audio_bitrate = abr
                         audio_format = f
 
-            # Progressive MP4 formats (no merging needed)
+            # For the UI, we still provide format options, but during actual download,
+            # we will override them to ensure MP4 compatibility.
             progressive_formats = {}
-            # Non-progressive bestvideo formats (need merging with bestaudio)
             separate_videos = {}
-
             for f in formats:
                 ext = f.get('ext')
                 vcodec = f.get('vcodec', 'none')
@@ -62,7 +61,7 @@ def analyze():
                                 'progressive': True
                             }
                     else:
-                        # Potential bestvideo format (no audio)
+                        # Potential bestvideo
                         if vcodec != 'none' and acodec == 'none':
                             if (resolution not in separate_videos) or (tbr > separate_videos[resolution]['tbr']):
                                 separate_videos[resolution] = {
@@ -72,13 +71,11 @@ def analyze():
                                     'progressive': False
                                 }
 
-            # Combine progressive and separate
             chosen_formats = list(progressive_formats.values())
             for res, vid in separate_videos.items():
                 if res not in progressive_formats:
                     chosen_formats.append(vid)
 
-            # Sort by resolution descending
             chosen_formats.sort(key=lambda x: int(x['resolution'].replace('p','')), reverse=True)
 
             response = {
@@ -93,7 +90,8 @@ def analyze():
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
-    format_id = request.args.get('format_id', '').strip()
+    # Even though we get format_id from UI, we'll override for video to ensure compatibility.
+    requested_format_id = request.args.get('format_id', '').strip()
     mode = request.args.get('mode', '').strip()  # 'video' or 'audio'
     progressive_str = request.args.get('progressive', 'true')
     progressive = (progressive_str.lower() == 'true')
@@ -108,6 +106,7 @@ def download():
             os.remove(file_path)
 
     if mode == 'audio':
+        # Keep audio logic the same, producing MP3
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
@@ -116,32 +115,27 @@ def download():
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
-                'preferredquality': '192',
+                'preferredquality': '192'
             }]
         }
         ext = 'mp3'
     else:
-        if not format_id:
-            return "No format_id provided for video download", 400
-
-        if progressive:
-            ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
-                'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-                'format': format_id,
-            }
-            ext = 'mp4'
-        else:
-            chosen_format = f"{format_id}+bestaudio"
-            ydl_opts = {
-                'quiet': True,
-                'no_warnings': True,
-                'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-                'format': chosen_format,
-                'merge_output_format': 'mp4'
-            }
-            ext = 'mp4'
+        # For video: enforce a known good MP4 format (h264+aac) to ensure max compatibility
+        # We use bestvideo[ext=mp4]+bestaudio[ext=m4a] which yt-dlp should mux into a mp4 container.
+        # Add FFmpegVideoRemuxer to ensure proper MP4 formatting.
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',  # fallback if needed
+            'postprocessors': [
+                {
+                    'key': 'FFmpegVideoRemuxer',
+                    'preferredformat': 'mp4'
+                }
+            ]
+        }
+        ext = 'mp4'
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
