@@ -65,7 +65,7 @@ header {
     background: rgba(255,255,255,0.25);
     color: #fff;
     border: none;
-    padding: 10px 20px;
+    padding: 14px 25px;
     cursor: pointer;
     border-radius: 30px;
     font-weight: bold;
@@ -99,14 +99,14 @@ section.active {
 }
 
 .home-section h2 {
-    font-size: 2.5em;
+    font-size: 2.2em;
     margin-bottom: 20px;
     font-weight: 400;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .home-section p {
-    font-size: 1.2em;
+    font-size: 1.1em;
     max-width: 500px;
     margin: 0 auto;
     line-height: 1.5;
@@ -137,7 +137,7 @@ section.active {
 
 .input-container input {
     width: 300px;
-    padding: 12px;
+    padding: 14px;
     border-radius: 30px;
     border: none;
     outline: none;
@@ -149,7 +149,7 @@ section.active {
 }
 
 .analyze-btn {
-    padding: 12px 25px;
+    padding: 14px 25px;
     border: none;
     background: #fff;
     color: #333;
@@ -158,6 +158,7 @@ section.active {
     font-weight: bold;
     font-size: 1em;
     transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
 
 .analyze-btn:hover {
@@ -190,7 +191,7 @@ section.active {
 }
 
 .download-card {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.2);
     padding: 20px;
     border-radius: 20px;
     width: 80%;
@@ -213,6 +214,7 @@ section.active {
     margin-bottom: 10px;
     font-weight: 400;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    font-size: 1.2em;
 }
 
 .format-buttons {
@@ -223,8 +225,8 @@ section.active {
 }
 
 .format-btn {
-    padding: 12px 20px;
-    background: #f0f0f0;
+    padding: 14px 20px;
+    background: #f8f8f8;
     color: #333;
     border: none;
     border-radius: 30px;
@@ -232,16 +234,17 @@ section.active {
     font-weight: bold;
     font-size: 1em;
     transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .format-btn:hover {
     transform: translateY(-2px);
-    background: #ddd;
+    background: #ededed;
 }
 
 .back-btn {
     margin-top: 40px;
-    padding: 12px 25px;
+    padding: 14px 30px;
     border: none;
     background: rgba(255,255,255,0.3);
     color: #fff;
@@ -260,11 +263,11 @@ section.active {
 /* Responsive Adjustments */
 @media (max-width: 600px) {
     .site-title {
-        font-size: 1.2em;
+        font-size: 1.3em;
     }
 
     .tab-btn, .analyze-btn, .format-btn, .back-btn {
-        padding: 14px 30px;
+        padding: 14px 20px;
         font-size: 1.1em;
     }
 
