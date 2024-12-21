@@ -1,24 +1,15 @@
-/* RESET & BASE */
 html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     max-width: 100%;
-    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
     font-family: 'Roboto', sans-serif;
     color: #fff;
-}
-
-*, *::before, *::after {
-    box-sizing: inherit;
-}
-
-body {
-    overflow-y: auto;
+    background: #333; /* dark fallback */
     background: linear-gradient(135deg, #6C63FF, #B993D6, #8CA6DB);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    position: relative;
 }
 
 @keyframes gradientBG {
@@ -27,7 +18,10 @@ body {
     100% { background-position: 0% 70%; }
 }
 
-/* BACKGROUND CANVAS */
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
 #bgCanvas {
     position: fixed;
     top: 0; left: 0;
@@ -36,56 +30,54 @@ body {
     z-index: -1;
 }
 
-/* HEADER & NAV */
+/* HEADER */
 header {
     display: flex;
-    flex-wrap: wrap; /* allow wrapping on small screens */
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     background: rgba(0,0,0,0.3);
-    padding: 10px 20px;
+    padding: 15px 10px;
     backdrop-filter: blur(5px);
     z-index: 10;
     position: relative;
+    text-align: center;
 }
 
 .logo-container {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    flex-shrink: 0;
+    margin-bottom: 10px;
 }
 
 .logo {
-    height: 40px;
-    margin-right: 10px;
+    height: 50px;
+    margin-bottom: 5px;
 }
 
 .site-title {
     font-size: 1.5em;
     font-weight: 500;
     letter-spacing: 1px;
-    white-space: nowrap; /* keep title in one line */
+    margin: 0;
 }
 
 .nav-tabs {
     list-style: none;
     display: flex;
-    flex-wrap: wrap; /* wrap if not enough horizontal space */
-    justify-content: center;
     gap: 10px;
     margin: 0;
     padding: 0;
-}
-
-.nav-tabs li {
-    display: inline-block;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .tab-btn {
     background: rgba(255,255,255,0.25);
     color: #fff;
     border: none;
-    padding: 12px 18px;
+    padding: 12px 20px;
     cursor: pointer;
     border-radius: 30px;
     font-weight: bold;
@@ -111,7 +103,8 @@ section {
     text-align: center;
     position: relative;
     z-index: 1;
-    padding: 60px 10px; /* reduce padding for mobile friendliness */
+    padding: 60px 20px;
+    min-height: calc(100vh - 120px); /* ensure enough height */
 }
 
 section.active {
@@ -174,7 +167,7 @@ section.active {
 }
 
 .analyze-btn {
-    padding: 12px 18px;
+    padding: 12px 20px;
     border: none;
     background: #fff;
     color: #333;
@@ -236,20 +229,20 @@ section.active {
     flex-wrap: wrap;
     justify-content: center;
     width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .download-card {
     background: rgba(255,255,255,0.2);
     padding: 20px;
     border-radius: 20px;
-    width: 90%;
-    max-width: 400px;
+    width: 100%;
     text-align: center;
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     transform: translateY(20px);
     opacity: 0;
     animation: fadeInUp 0.7s forwards;
-    margin: 0 auto;
 }
 
 @keyframes fadeInUp {
@@ -275,7 +268,7 @@ section.active {
 }
 
 .format-btn {
-    padding: 12px 18px;
+    padding: 12px 20px;
     background: #f8f8f8;
     color: #333;
     border: none;
@@ -301,33 +294,24 @@ section.active {
         font-size: 0.95em;
         padding: 10px 16px;
     }
-    header {
-        padding: 10px 15px;
-    }
     section {
-        padding: 50px 10px;
+        padding: 50px 15px;
     }
-    .home-section .home-content h2 {
-        font-size: 1.8em;
-    }
-    .content-section h2 {
-        font-size: 1.6em;
+    .input-container input {
+        width: 85%;
     }
 }
 
 @media (max-width: 480px) {
     .site-title {
-        font-size: 1.15em;
+        font-size: 1.2em;
     }
     .tab-btn, .analyze-btn, .format-btn, .back-btn {
         font-size: 0.9em;
         padding: 8px 14px;
     }
-    .input-container input {
-        width: 80%;
-    }
     .home-section .home-content h2 {
-        font-size: 1.5em;
+        font-size: 1.6em;
     }
     .content-section h2 {
         font-size: 1.4em;
