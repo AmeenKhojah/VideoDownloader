@@ -1,3 +1,4 @@
+# app.py
 import os
 import tempfile
 import logging
@@ -150,7 +151,7 @@ def download():
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'audio.%(ext)s'),
             'format': 'bestaudio',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -160,14 +161,18 @@ def download():
         }
         ext = 'mp3'
     elif mode == 'video' and format_id:
-        # Specific Video Format
+        # Specific Video Format with MP4 Conversion for iOS Compatibility
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
             'format': format_id,
+            'postprocessors': [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4',  # Ensure MP4 format
+            }]
         }
-        ext = 'mp4'  # Assuming mp4, adjust if necessary
+        ext = 'mp4'  # Enforce MP4 extension
     else:
         return "Invalid download mode or format.", 400
 
@@ -185,7 +190,7 @@ def download():
             if not downloaded_file:
                 return "File not found after download.", 500
 
-            safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip().replace(' ', '_')
             if not safe_title:
                 safe_title = "video"
 
