@@ -6,14 +6,20 @@ from flask import Flask, render_template, request, send_file, jsonify
 import yt_dlp
 import requests
 from io import BytesIO
-
+import uuid
 app = Flask(__name__)
 
-DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), 'video_downloader')
-os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+# Configure logging to show more details
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Create a secure temporary directory with unique name
+DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), f'video_downloader_{uuid.uuid4().hex}')
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+logger.info(f"Download directory created at: {DOWNLOAD_DIR}")
 
 @app.route('/')
 def home():
@@ -131,6 +137,7 @@ def fetch_image():
     except requests.exceptions.RequestException as e:
         return str(e), 500
 
+
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
@@ -140,94 +147,123 @@ def download():
     if not url:
         return "No URL provided", 400
 
-    # Clean old files except if downloading audio or video currently
-    for f in os.listdir(DOWNLOAD_DIR):
-        file_path = os.path.join(DOWNLOAD_DIR, f)
-        if os.path.isfile(file_path):
-            os.remove(file_path)
-
+    # Generate unique filename for this download
+    unique_id = uuid.uuid4().hex
     if mode == 'audio':
-        # Simplified audio options - remove unnecessary parameters
+        output_template = os.path.join(DOWNLOAD_DIR, f'audio_{unique_id}.%(ext)s')
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'audio.%(ext)s'),
-            'format': 'bestaudio',  # Change back to just 'bestaudio'
+            'outtmpl': output_template,
+            'format': 'bestaudio',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
             'prefer_ffmpeg': True,
+            'verbose': True,  # Add verbose output for debugging
         }
         ext = 'mp3'
     elif mode == 'video' and format_id:
-        # Modified video options to preserve audio
+        output_template = os.path.join(DOWNLOAD_DIR, f'video_{unique_id}.%(ext)s')
         ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': f'{format_id}+bestaudio[ext=m4a]/best',  # Ensure we get audio
-            'merge_output_format': 'mp4',  # Merge video and audio
+            'quiet': False,  # Enable output for debugging
+            'no_warnings': False,  # Show warnings
+            'outtmpl': output_template,
+            'format': f'{format_id}+bestaudio[ext=m4a]/best',
+            'merge_output_format': 'mp4',
             'prefer_ffmpeg': True,
+            'postprocessor_args': [
+                # FFmpeg arguments for maximum compatibility
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-profile:v', 'baseline',
+                '-level', '3.0',
+                '-movflags', '+faststart',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-ar', '48000',
+                '-pix_fmt', 'yuv420p',
+            ],
+            'verbose': True,  # Add verbose output for debugging
         }
         ext = 'mp4'
-
     else:
         return "Invalid download mode or format.", 400
 
     try:
+        # Clean only old files before starting new download
+        for f in os.listdir(DOWNLOAD_DIR):
+            if f != f'video_{unique_id}.{ext}' and f != f'audio_{unique_id}.{ext}':
+                try:
+                    os.remove(os.path.join(DOWNLOAD_DIR, f))
+                except Exception as e:
+                    logger.warning(f"Failed to remove old file {f}: {str(e)}")
+
+        logger.info(f"Starting download with options: {ydl_opts}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            title = info.get('title', 'video') or 'video'
+            logger.info(f"Download completed, info: {info.get('title', 'Unknown title')}")
 
-            downloaded_file = None
-            for file in os.listdir(DOWNLOAD_DIR):
-                if file.lower().endswith(ext):
-                    downloaded_file = os.path.join(DOWNLOAD_DIR, file)
-                    break
+            # Find the downloaded file
+            expected_file = None
+            if mode == 'audio':
+                expected_file = os.path.join(DOWNLOAD_DIR, f'audio_{unique_id}.mp3')
+            else:
+                expected_file = os.path.join(DOWNLOAD_DIR, f'video_{unique_id}.mp4')
 
-            if not downloaded_file:
+            if not os.path.exists(expected_file):
+                logger.error(f"Expected file not found: {expected_file}")
                 return "File not found after download.", 500
 
-            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip().replace(' ', '_')
-            if not safe_title:
-                safe_title = "video"
+            # Get safe title
+            title = info.get('title', 'video') or 'video'
+            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip()
+            safe_title = safe_title if safe_title else "video"
 
-            # Set mimetype explicitly for iOS compatibility
-            if ext == 'mp4':
-                mimetype = 'video/mp4'
-            elif ext == 'mp3':
-                mimetype = 'audio/mpeg'
-            else:
-                mimetype = None
-
-            # Serve the file with appropriate headers for streaming
+            logger.info(f"Preparing to send file: {expected_file}")
             try:
-                response = send_file(
-                    downloaded_file,
-                    mimetype=mimetype,
-                    as_attachment=True,
-                    download_name=f"{safe_title}.{ext}",  # Flask 2.2+
-                    conditional=True  # Enable range requests
-                )
-            except TypeError:
-                # Likely using Flask < 2.2
-                response = send_file(
-                    downloaded_file,
-                    mimetype=mimetype,
-                    as_attachment=True,
-                    attachment_filename=f"{safe_title}.{ext}",  # For Flask < 2.2
-                    conditional=True
-                )
+                if ext == 'mp4':
+                    response = send_file(
+                        expected_file,
+                        mimetype='video/mp4',
+                        as_attachment=True,
+                        download_name=f"{safe_title}.mp4",
+                        conditional=True
+                    )
+                    response.headers['Content-Type'] = 'video/mp4'
+                    response.headers['X-Content-Type-Options'] = 'nosniff'
+                else:
+                    response = send_file(
+                        expected_file,
+                        mimetype='audio/mpeg',
+                        as_attachment=True,
+                        download_name=f"{safe_title}.mp3",
+                        conditional=True
+                    )
+                    response.headers['Content-Type'] = 'audio/mpeg'
 
-            return response
+                logger.info("File sent successfully")
+                return response
+
+            except Exception as e:
+                logger.error(f"Error sending file: {str(e)}")
+                return f"Error sending file: {str(e)}", 500
 
     except Exception as e:
-        logging.error(f"Error in /download: {str(e)}")
+        logger.error(f"Error in download process: {str(e)}")
         return f"Error downloading: {str(e)}", 500
+
+    finally:
+        # Cleanup in finally block to ensure it runs
+        try:
+            if 'expected_file' in locals() and os.path.exists(expected_file):
+                os.remove(expected_file)
+        except Exception as e:
+            logger.warning(f"Failed to cleanup file: {str(e)}")
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Ensure ffmpeg is installed on your server (e.g., sudo apt-get install ffmpeg)
     app.run(host="0.0.0.0", port=port, debug=False)
