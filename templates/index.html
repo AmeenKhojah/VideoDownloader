@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Video Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <canvas id="bgCanvas"></canvas>
@@ -31,81 +29,27 @@
         </div>
     </section>
 
-    <!-- Instagram Section -->
     <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
-        <p class="instruction">Enter the Instagram video URL below and click the search icon.</p>
+        <p class="instruction">Enter the Instagram video URL below and click "Download".</p>
         <div class="input-container">
-            <button class="paste-btn" id="pasteInstagramBtn"><i class="fas fa-paste"></i> Paste</button>
-            <div class="search-bar">
-                <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL...">
-                <button class="icon-btn" id="instagramAnalyzeBtn"><i class="fas fa-search"></i></button>
-            </div>
+            <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL...">
+            <button class="analyze-btn" id="instagramAnalyzeBtn">Download</button>
         </div>
         <div id="instagramLoader" class="loader" style="display:none;"></div>
         <div id="instagramResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
-        <!-- Thumbnail and Download Button -->
-        <!-- Thumbnail and Download Button -->
-        <div id="instagramThumbnailContainer" class="thumbnail-container" style="display:none;">
-            <div class="thumbnail-content">
-                <div class="thumbnail-wrapper-with-button">
-                    <!-- Thumbnail with Play Button Overlay -->
-                    <div class="thumbnail-wrapper">
-                        <a href="#" id="instagramVideoLink" target="_blank">
-                            <img id="instagramVideoThumbnail" src="" alt="Video Thumbnail" class="video-thumbnail">
-                            <div class="play-button">
-                                <i class="fas fa-play-circle"></i>
-                            </div>
-                        </a>
-                    </div>
-                    <!-- Download Button Positioned Next to Thumbnail -->
-                    <a id="instagramFinalDownloadBtn" href="#" class="download-final-btn">
-                        <span class="btn-text">Download</span>
-                        <span class="spinner"></span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
         <button class="back-btn" id="backFromInstagram">Back to Home</button>
     </section>
 
-    <!-- YouTube Section -->
     <section class="content-section" id="youtubeSection">
         <h2>Download from YouTube</h2>
-        <p class="instruction">Enter the YouTube video URL below and click the search icon.</p>
+        <p class="instruction">Enter the YouTube video URL below and click "Download".</p>
         <div class="input-container">
-            <button class="paste-btn" id="pasteYouTubeBtn"><i class="fas fa-paste"></i> Paste</button>
-            <div class="search-bar">
-                <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL...">
-                <button class="icon-btn" id="youtubeAnalyzeBtn"><i class="fas fa-search"></i></button>
-            </div>
+            <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL...">
+            <button class="analyze-btn" id="youtubeAnalyzeBtn">Download</button>
         </div>
         <div id="youtubeLoader" class="loader" style="display:none;"></div>
         <div id="youtubeResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
-        <!-- Thumbnail and Download Button -->
-<div id="youtubeThumbnailContainer" class="thumbnail-container" style="display:none;">
-    <div class="thumbnail-content">
-        <h3 id="youtubeVideoTitle">Video Title</h3>
-        <div class="thumbnail-wrapper-with-button">
-            <div class="thumbnail-wrapper">
-                <a href="#" id="youtubeVideoLink" target="_blank">
-                    <img id="youtubeVideoThumbnail" src="" alt="Video Thumbnail" class="video-thumbnail" onerror="this.onerror=null; this.src='{{ url_for('static', filename='placeholder.png') }}';">
-                    <div class="play-button">
-                        <i class="fas fa-play-circle"></i>
-                    </div>
-                </a>
-            </div>
-            <a id="youtubeFinalDownloadBtn" href="#" class="download-final-btn">
-                <span class="btn-text">Download</span>
-                <span class="spinner"></span>
-            </a>
-        </div>
-    </div>
-    <!-- Embedded Video Player (Hidden by Default) -->
-    <iframe id="youtubeVideoPlayer" class="video-player" style="display:none;" frameborder="0" allowfullscreen></iframe>
-</div>
-
         <button class="back-btn" id="backFromYouTube">Back to Home</button>
     </section>
 
