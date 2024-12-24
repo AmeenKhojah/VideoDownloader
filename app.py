@@ -1,12 +1,19 @@
+# app.py
 import os
 import tempfile
+import logging
 from flask import Flask, render_template, request, send_file, jsonify
 import yt_dlp
+import requests
+from io import BytesIO
 
 app = Flask(__name__)
 
 DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), 'video_downloader')
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 @app.route('/')
 def home():
@@ -28,6 +35,23 @@ def analyze():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
+
+            # Enhanced Thumbnail Extraction
+            extractor_key = info.get('extractor_key', '').lower()
+            if 'instagram' in extractor_key:
+                thumbnails = info.get('thumbnails', [])
+                if thumbnails:
+                    # Assuming the last thumbnail is the highest resolution
+                    thumbnail = thumbnails[-1].get('url', '')
+                else:
+                    thumbnail = ''
+                # Enhanced Title Extraction
+                title = info.get('description') or info.get('title') or 'Instagram Video'
+            else:
+                thumbnail = info.get('thumbnail', '')
+                title = info.get('title') or 'No Title'
+
+            webpage_url = info.get('webpage_url') or '#'
 
             # Check audio availability
             audio_format = None
@@ -77,50 +101,80 @@ def analyze():
 
             response = {
                 'video_formats': chosen_formats,
-                'audio_available': audio_format is not None
+                'audio_available': audio_format is not None,
+                'thumbnail': thumbnail,  # Add thumbnail to response
+                'title': title,  # Add title to response
+                'webpage_url': webpage_url  # Add webpage URL to response
             }
+            logging.info(f"Extractor: {extractor_key}")
+            logging.info(f"Title: {title}")
+            logging.info(f"Thumbnail URL: {thumbnail}")
             return jsonify(response)
 
     except Exception as e:
+        logging.error(f"Error in /analyze: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/fetch_image')
+def fetch_image():
+    image_url = request.args.get('url')
+    if not image_url:
+        return 'No image URL provided.', 400
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        return send_file(
+            BytesIO(response.content),
+            mimetype=response.headers.get('Content-Type'),
+            as_attachment=False
+        )
+    except requests.exceptions.RequestException as e:
+        return str(e), 500
 
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
-    mode = request.args.get('mode', '').strip()  # 'video' or 'audio'
+    mode = request.args.get('mode', '').strip()
+    format_id = request.args.get('format_id', '').strip()
 
     if not url:
         return "No URL provided", 400
 
-    # Clean old files
+    # Clean old files except if downloading audio or video currently
     for f in os.listdir(DOWNLOAD_DIR):
         file_path = os.path.join(DOWNLOAD_DIR, f)
         if os.path.isfile(file_path):
             os.remove(file_path)
 
     if mode == 'audio':
-        # MP3 Audio
+        # Simplified audio options - remove unnecessary parameters
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': 'bestaudio',
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'audio.%(ext)s'),
+            'format': 'bestaudio',  # Change back to just 'bestaudio'
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
-            }]
+            }],
+            'prefer_ffmpeg': True,
         }
         ext = 'mp3'
-    else:
-        # Only download MP4 format without any post-processing for now
+    elif mode == 'video' and format_id:
+        # Modified video options to preserve audio
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': 'best[ext=mp4]',
+            'format': f'{format_id}+bestaudio[ext=m4a]/best',  # Ensure we get audio
+            'merge_output_format': 'mp4',  # Merge video and audio
+            'prefer_ffmpeg': True,
         }
         ext = 'mp4'
+
+    else:
+        return "Invalid download mode or format.", 400
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -136,7 +190,7 @@ def download():
             if not downloaded_file:
                 return "File not found after download.", 500
 
-            safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip().replace(' ', '_')
             if not safe_title:
                 safe_title = "video"
 
@@ -148,18 +202,32 @@ def download():
             else:
                 mimetype = None
 
-            # Send file with inline disposition for browser preview
-            return send_file(
-                downloaded_file,
-                as_attachment=False,
-                download_name=f"{safe_title}.{ext}",
-                mimetype=mimetype
-            )
+            # Serve the file with appropriate headers for streaming
+            try:
+                response = send_file(
+                    downloaded_file,
+                    mimetype=mimetype,
+                    as_attachment=True,
+                    download_name=f"{safe_title}.{ext}",  # Flask 2.2+
+                    conditional=True  # Enable range requests
+                )
+            except TypeError:
+                # Likely using Flask < 2.2
+                response = send_file(
+                    downloaded_file,
+                    mimetype=mimetype,
+                    as_attachment=True,
+                    attachment_filename=f"{safe_title}.{ext}",  # For Flask < 2.2
+                    conditional=True
+                )
+
+            return response
 
     except Exception as e:
+        logging.error(f"Error in /download: {str(e)}")
         return f"Error downloading: {str(e)}", 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Ensure ffmpeg is installed on your server (e.g., `sudo apt-get install ffmpeg`)
+    # Ensure ffmpeg is installed on your server (e.g., sudo apt-get install ffmpeg)
     app.run(host="0.0.0.0", port=port, debug=False)
