@@ -30,11 +30,17 @@ def analyze():
     url = request.form.get('url', '').strip()
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
-
     ydl_opts = {
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+        'merge_output_format': 'mp4',
+        'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp4',
+        }],
+        'prefer_ffmpeg': True,
+        'outtmpl': os.path.join(DOWNLOAD_DIR, 'video_%(id)s.%(ext)s'),
         'quiet': True,
         'no_warnings': True,
-        'skip_download': True,
     }
 
     try:
@@ -147,121 +153,63 @@ def download():
     if not url:
         return "No URL provided", 400
 
-    # Generate unique filename for this download
-    unique_id = uuid.uuid4().hex
+    unique_id = uuid.uuid4().hex  # Generate unique ID
+    output_template = os.path.join(DOWNLOAD_DIR, f'video_{unique_id}.%(ext)s')
+
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'outtmpl': output_template,
+        'prefer_ffmpeg': True,
+        'merge_output_format': 'mp4',
+        'postprocessors': [{
+            'key': 'FFmpegVideoConvertor',
+            'preferedformat': 'mp4',
+        }],
+    }
+
     if mode == 'audio':
-        output_template = os.path.join(DOWNLOAD_DIR, f'audio_{unique_id}.%(ext)s')
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'outtmpl': output_template,
+        ydl_opts.update({
             'format': 'bestaudio',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
-            }],
-            'prefer_ffmpeg': True,
-            'verbose': True,  # Add verbose output for debugging
-        }
+            }]
+        })
         ext = 'mp3'
     elif mode == 'video' and format_id:
-        output_template = os.path.join(DOWNLOAD_DIR, f'video_{unique_id}.%(ext)s')
-        ydl_opts = {
-            'quiet': False,  # Enable output for debugging
-            'no_warnings': False,  # Show warnings
-            'outtmpl': output_template,
-            'format': f'{format_id}+bestaudio[ext=m4a]/best',
-            'merge_output_format': 'mp4',
-            'prefer_ffmpeg': True,
-            'postprocessor_args': [
-                # FFmpeg arguments for maximum compatibility
-                '-c:v', 'libx264',
-                '-preset', 'medium',
-                '-profile:v', 'baseline',
-                '-level', '3.0',
-                '-movflags', '+faststart',
-                '-c:a', 'aac',
-                '-b:a', '192k',
-                '-ar', '48000',
-                '-pix_fmt', 'yuv420p',
-            ],
-            'verbose': True,  # Add verbose output for debugging
-        }
+        ydl_opts['format'] = f"{format_id}+bestaudio[ext=m4a]/best[ext=mp4]"
         ext = 'mp4'
     else:
         return "Invalid download mode or format.", 400
 
     try:
-        # Clean only old files before starting new download
-        for f in os.listdir(DOWNLOAD_DIR):
-            if f != f'video_{unique_id}.{ext}' and f != f'audio_{unique_id}.{ext}':
-                try:
-                    os.remove(os.path.join(DOWNLOAD_DIR, f))
-                except Exception as e:
-                    logger.warning(f"Failed to remove old file {f}: {str(e)}")
-
-        logger.info(f"Starting download with options: {ydl_opts}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            logger.info(f"Download completed, info: {info.get('title', 'Unknown title')}")
+            title = info.get('title', 'video') or 'video'
+            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip() or "video"
 
-            # Find the downloaded file
-            expected_file = None
-            if mode == 'audio':
-                expected_file = os.path.join(DOWNLOAD_DIR, f'audio_{unique_id}.mp3')
-            else:
-                expected_file = os.path.join(DOWNLOAD_DIR, f'video_{unique_id}.mp4')
+            downloaded_file = None
+            for file in os.listdir(DOWNLOAD_DIR):
+                if file.startswith(f"video_{unique_id}") and file.endswith(ext):
+                    downloaded_file = os.path.join(DOWNLOAD_DIR, file)
+                    break
 
-            if not os.path.exists(expected_file):
-                logger.error(f"Expected file not found: {expected_file}")
+            if not downloaded_file:
                 return "File not found after download.", 500
 
-            # Get safe title
-            title = info.get('title', 'video') or 'video'
-            safe_title = "".join(c for c in title if c.isalnum() or c in ('_', '-')).strip()
-            safe_title = safe_title if safe_title else "video"
-
-            logger.info(f"Preparing to send file: {expected_file}")
-            try:
-                if ext == 'mp4':
-                    response = send_file(
-                        expected_file,
-                        mimetype='video/mp4',
-                        as_attachment=True,
-                        download_name=f"{safe_title}.mp4",
-                        conditional=True
-                    )
-                    response.headers['Content-Type'] = 'video/mp4'
-                    response.headers['X-Content-Type-Options'] = 'nosniff'
-                else:
-                    response = send_file(
-                        expected_file,
-                        mimetype='audio/mpeg',
-                        as_attachment=True,
-                        download_name=f"{safe_title}.mp3",
-                        conditional=True
-                    )
-                    response.headers['Content-Type'] = 'audio/mpeg'
-
-                logger.info("File sent successfully")
-                return response
-
-            except Exception as e:
-                logger.error(f"Error sending file: {str(e)}")
-                return f"Error sending file: {str(e)}", 500
-
+            # Send file with appropriate headers
+            return send_file(
+                downloaded_file,
+                mimetype='video/mp4' if ext == 'mp4' else 'audio/mpeg',
+                as_attachment=True,
+                download_name=f"{safe_title}.{ext}",
+                conditional=True
+            )
     except Exception as e:
-        logger.error(f"Error in download process: {str(e)}")
+        logging.error(f"Error downloading: {str(e)}")
         return f"Error downloading: {str(e)}", 500
-
-    finally:
-        # Cleanup in finally block to ensure it runs
-        try:
-            if 'expected_file' in locals() and os.path.exists(expected_file):
-                os.remove(expected_file)
-        except Exception as e:
-            logger.warning(f"Failed to cleanup file: {str(e)}")
 
 
 if __name__ == "__main__":
