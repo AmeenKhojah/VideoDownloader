@@ -128,19 +128,18 @@ def download():
     if not url:
         return "No URL provided", 400
 
-    # Create a unique subdirectory for this download
-    download_id = str(hash(url + str(time.time())))
-    download_path = os.path.join(DOWNLOAD_DIR, download_id)
-    os.makedirs(download_path, exist_ok=True)
-
-    print(f"Download path created: {download_path}")  # Debug log
+    # Clean old files
+    for f in os.listdir(DOWNLOAD_DIR):
+        file_path = os.path.join(DOWNLOAD_DIR, f)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
     if mode == 'audio':
-        output_template = os.path.join(download_path, '%(title)s.%(ext)s')
+        # MP3 Audio settings remain the same
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': output_template,
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'audio.%(ext)s'),
             'format': 'bestaudio/best',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -150,104 +149,80 @@ def download():
         }
         ext = 'mp3'
     else:
-        output_template = os.path.join(download_path, '%(title)s.%(ext)s')
+        # Modified video settings for iOS compatibility
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': output_template,
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
             'format': f'{format_id}+bestaudio[ext=m4a]/bestaudio' if format_id else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'merge_output_format': 'mp4',
             'postprocessor_args': [
-                '-c:v', 'h264',
-                '-profile:v', 'baseline',
-                '-level', '3.0',
-                '-movflags', '+faststart',
-                '-c:a', 'aac',
-                '-b:a', '192k',
-                '-ar', '44100',
-                '-strict', 'experimental',
-                '-f', 'mp4'
+                # Video settings for iOS
+                '-c:v', 'libx264',  # Use H.264 codec
+                '-crf', '23',  # Constant Rate Factor for quality
+                '-preset', 'medium',  # Encoding preset
+                '-profile:v', 'baseline',  # H.264 profile
+                '-level', '3.0',  # H.264 level
+                '-movflags', '+faststart',  # Enable streaming
+                # Audio settings
+                '-c:a', 'aac',  # AAC audio codec
+                '-b:a', '192k',  # Audio bitrate
+                '-ar', '48000',  # Audio sample rate
+                # Container settings
+                '-f', 'mp4',  # Force MP4 container
+                '-brand', 'mp42',  # Set MP4 brand for iOS
             ],
             'postprocessors': [{
-                'key': 'FFmpegVideoConvertor',
+                'key': 'FFmpegVideoRemuxer',  # Changed from VideoConvertor to VideoRemuxer
                 'preferedformat': 'mp4',
-            }],
-            'merge_output_format': 'mp4'
+            }]
         }
         ext = 'mp4'
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Extract info first
-            info = ydl.extract_info(url, download=False)
+            info = ydl.extract_info(url, download=True)
             title = info.get('title', 'video') or 'video'
             safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
             if not safe_title:
                 safe_title = "video"
 
-            # Download with the safe title
-            ydl_opts['outtmpl'] = os.path.join(download_path, f'{safe_title}.%(ext)s')
-            info = ydl.extract_info(url, download=True)
-
-            print(f"Download completed, searching in: {download_path}")  # Debug log
-            print(f"Files in directory: {os.listdir(download_path)}")  # Debug log
-
-            # Search for the downloaded file
             downloaded_file = None
-            for file in os.listdir(download_path):
-                full_path = os.path.join(download_path, file)
-                print(f"Checking file: {full_path}")  # Debug log
-                if os.path.isfile(full_path) and file.lower().endswith(ext):
-                    downloaded_file = full_path
+            for file in os.listdir(DOWNLOAD_DIR):
+                if file.lower().endswith(ext):
+                    downloaded_file = os.path.join(DOWNLOAD_DIR, file)
                     break
 
             if not downloaded_file:
-                print("No file found matching the expected extension")  # Debug log
                 return "File not found after download.", 500
 
-            print(f"Found downloaded file: {downloaded_file}")  # Debug log
-
+            # Modified MIME type handling for iOS
             if ext == 'mp4':
-                mimetype = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
+                # Standard MIME type for iOS video
+                mimetype = 'video/mp4'
             elif ext == 'mp3':
                 mimetype = 'audio/mpeg'
             else:
                 mimetype = None
 
-            try:
-                response = send_file(
-                    downloaded_file,
-                    as_attachment=True,
-                    download_name=f"{safe_title}.{ext}",
-                    mimetype=mimetype
-                )
+            # Send file with proper headers
+            response = send_file(
+                downloaded_file,
+                as_attachment=True,
+                download_name=f"{safe_title}.{ext}",
+                mimetype=mimetype
+            )
 
-                response.headers['Content-Disposition'] = f'attachment; filename="{safe_title}.{ext}"'
-                response.headers['Content-Type'] = mimetype
+            # Set headers for iOS compatibility
+            response.headers.set('Content-Type', mimetype)
+            response.headers.set('Content-Disposition', f'attachment; filename="{safe_title}.{ext}"')
+            response.headers.set('Accept-Ranges', 'bytes')
 
-                return response
-
-            except Exception as e:
-                print(f"Error sending file: {str(e)}")  # Debug log
-                return f"Error sending file: {str(e)}", 500
+            return response
 
     except Exception as e:
-        print(f"Download error: {str(e)}")  # Debug log
+        print(f"Download error: {str(e)}")
         return f"Error downloading: {str(e)}", 500
-
-    finally:
-        # Clean up the download directory after a delay
-        def cleanup_download_dir():
-            time.sleep(60)  # Wait for 60 seconds
-            try:
-                import shutil
-                shutil.rmtree(download_path)
-                print(f"Cleaned up directory: {download_path}")  # Debug log
-            except Exception as e:
-                print(f"Error cleaning up directory: {str(e)}")  # Debug log
-
-        import threading
-        cleanup_thread = threading.Thread(target=cleanup_download_dir)
-        cleanup_thread.start()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
