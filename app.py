@@ -118,6 +118,7 @@ def analyze():
         print(str(e))
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/download', methods=['GET'])
 def download():
     url = request.args.get('url', '').strip()
@@ -148,12 +149,27 @@ def download():
         }
         ext = 'mp3'
     else:
-        # Video with audio
+        # Video with audio - iOS compatible settings
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
             'format': f'{format_id}+bestaudio[ext=m4a]/bestaudio' if format_id else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            # FFmpeg configuration for iOS compatibility
+            'postprocessor_args': [
+                # Video codec settings
+                '-c:v', 'h264',  # Use H.264 codec
+                '-profile:v', 'baseline',  # Use baseline profile for maximum compatibility
+                '-level', '3.0',  # Set H.264 level
+                '-movflags', '+faststart',  # Enable fast start for web playback
+                # Audio codec settings
+                '-c:a', 'aac',  # Use AAC codec for audio
+                '-b:a', '192k',  # Audio bitrate
+                '-ar', '44100',  # Audio sample rate
+                # General settings
+                '-strict', 'experimental',  # Allow experimental codecs
+                '-f', 'mp4'  # Force MP4 container
+            ],
             'postprocessors': [{
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp4',
@@ -180,20 +196,28 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
-            # Set mimetype explicitly for iOS compatibility
+            # Enhanced MIME type handling for iOS
             if ext == 'mp4':
-                mimetype = 'video/mp4'
+                # Specific MIME type for iOS compatibility
+                mimetype = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
             elif ext == 'mp3':
                 mimetype = 'audio/mpeg'
             else:
                 mimetype = None
 
-            return send_file(
+            # Set additional headers for better iOS compatibility
+            response = send_file(
                 downloaded_file,
                 as_attachment=True,
                 download_name=f"{safe_title}.{ext}",
                 mimetype=mimetype
             )
+
+            # Add Content-Disposition header for iOS
+            response.headers['Content-Disposition'] = f'attachment; filename="{safe_title}.{ext}"'
+            response.headers['Content-Type'] = mimetype
+
+            return response
 
     except Exception as e:
         print(f"Download error: {str(e)}")
