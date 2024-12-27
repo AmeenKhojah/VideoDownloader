@@ -19,6 +19,8 @@
                 <li><button id="homeTab" class="tab-btn">Home</button></li>
                 <li><button id="instagramTab" class="tab-btn">Instagram</button></li>
                 <li><button id="youtubeTab" class="tab-btn">YouTube</button></li>
+                <!-- NEW TikTok TAB -->
+                <li><button id="tiktokTab" class="tab-btn">TikTok</button></li>
             </ul>
         </nav>
     </header>
@@ -31,10 +33,13 @@
 
     <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
-        <p class="instruction">Enter the Instagram video URL below and click "Download".</p>
+        <p class="instruction">Enter the Instagram video URL below and click the search icon or press Enter.</p>
         <div class="input-container">
             <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL...">
-            <button class="analyze-btn" id="instagramAnalyzeBtn">Download</button>
+            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <button class="analyze-btn" id="instagramAnalyzeBtn">
+                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+            </button>
         </div>
         <div id="instagramLoader" class="loader" style="display:none;"></div>
         <div id="instagramResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
@@ -43,15 +48,35 @@
 
     <section class="content-section" id="youtubeSection">
         <h2>Download from YouTube</h2>
-        <p class="instruction">Enter the YouTube video URL below and click "Download".</p>
+        <p class="instruction">Enter the YouTube video URL below and click the search icon or press Enter.</p>
         <div class="input-container">
             <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL...">
-            <button class="analyze-btn" id="youtubeAnalyzeBtn">Download</button>
+            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <button class="analyze-btn" id="youtubeAnalyzeBtn">
+                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+            </button>
         </div>
         <div id="youtubeLoader" class="loader" style="display:none;"></div>
         <div id="youtubeResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
         <button class="back-btn" id="backFromYouTube">Back to Home</button>
     </section>
+
+    <!-- NEW TIKTOK SECTION -->
+    <section class="content-section" id="tiktokSection">
+        <h2>Download from TikTok</h2>
+        <p class="instruction">Enter the TikTok video URL below and click the search icon or press Enter.</p>
+        <div class="input-container">
+            <input type="text" id="tiktokUrl" placeholder="Enter TikTok video URL...">
+            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <button class="analyze-btn" id="tiktokAnalyzeBtn">
+                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+            </button>
+        </div>
+        <div id="tiktokLoader" class="loader" style="display:none;"></div>
+        <div id="tiktokResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
+        <button class="back-btn" id="backFromTiktok">Back to Home</button>
+    </section>
+    <!-- END TIKTOK SECTION -->
 
     <footer>
         <p>© 2024 Ameen Khojah. All rights reserved.</p>
