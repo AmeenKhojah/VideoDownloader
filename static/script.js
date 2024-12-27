@@ -2,39 +2,194 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeSection = document.getElementById('homeSection');
     const instagramSection = document.getElementById('instagramSection');
     const youtubeSection = document.getElementById('youtubeSection');
-    // NEW TikTok section reference
     const tiktokSection = document.getElementById('tiktokSection');
 
     const homeTab = document.getElementById('homeTab');
     const instagramTab = document.getElementById('instagramTab');
     const youtubeTab = document.getElementById('youtubeTab');
-    // NEW TikTok tab reference
     const tiktokTab = document.getElementById('tiktokTab');
 
     const backFromInstagram = document.getElementById('backFromInstagram');
     const backFromYouTube = document.getElementById('backFromYouTube');
-    // NEW back button for TikTok
     const backFromTiktok = document.getElementById('backFromTiktok');
 
     const instagramUrlInput = document.getElementById('instagramUrl');
     const youtubeUrlInput = document.getElementById('youtubeUrl');
-    // NEW TikTok URL input
     const tiktokUrlInput = document.getElementById('tiktokUrl');
 
     const instagramAnalyzeBtn = document.getElementById('instagramAnalyzeBtn');
     const youtubeAnalyzeBtn = document.getElementById('youtubeAnalyzeBtn');
-    // NEW TikTok analyze button
     const tiktokAnalyzeBtn = document.getElementById('tiktokAnalyzeBtn');
 
     const instagramLoader = document.getElementById('instagramLoader');
     const youtubeLoader = document.getElementById('youtubeLoader');
-    // NEW TikTok loader
     const tiktokLoader = document.getElementById('tiktokLoader');
 
     const instagramResults = document.getElementById('instagramResults');
     const youtubeResults = document.getElementById('youtubeResults');
-    // NEW TikTok results
     const tiktokResults = document.getElementById('tiktokResults');
+
+    // PASTE BUTTONS
+    const pasteClipboardBtnInstagram = document.getElementById('pasteClipboardBtnInstagram');
+    const pasteClipboardBtnYouTube = document.getElementById('pasteClipboardBtnYouTube');
+    const pasteClipboardBtnTiktok = document.getElementById('pasteClipboardBtnTiktok');
+
+    // Function to handle paste actions
+    async function handlePaste(pasteBtn, urlInput) {
+        try {
+            const text = await navigator.clipboard.readText();
+            urlInput.value = text;
+        } catch (err) {
+            alert('Failed to access clipboard: ' + err.message);
+        }
+    }
+
+    // Add event listeners for the Paste Clipboard buttons
+    if (pasteClipboardBtnInstagram) {
+        pasteClipboardBtnInstagram.addEventListener('click', () => {
+            handlePaste(pasteClipboardBtnInstagram, instagramUrlInput);
+        });
+    }
+
+    if (pasteClipboardBtnYouTube) {
+        pasteClipboardBtnYouTube.addEventListener('click', () => {
+            handlePaste(pasteClipboardBtnYouTube, youtubeUrlInput);
+        });
+    }
+
+    if (pasteClipboardBtnTiktok) {
+        pasteClipboardBtnTiktok.addEventListener('click', () => {
+            handlePaste(pasteClipboardBtnTiktok, tiktokUrlInput);
+        });
+    }
+
+    // Add event listeners for the Analyze buttons
+    if (instagramAnalyzeBtn) {
+        instagramAnalyzeBtn.addEventListener('click', () => {
+            const url = instagramUrlInput.value.trim();
+            if (url) {
+                analyzeVideo(url, instagramLoader, instagramResults);
+            } else {
+                alert('Please enter a valid Instagram URL.');
+            }
+        });
+    }
+
+    if (youtubeAnalyzeBtn) {
+        youtubeAnalyzeBtn.addEventListener('click', () => {
+            const url = youtubeUrlInput.value.trim();
+            if (url) {
+                analyzeVideo(url, youtubeLoader, youtubeResults);
+            } else {
+                alert('Please enter a valid YouTube URL.');
+            }
+        });
+    }
+
+    if (tiktokAnalyzeBtn) {
+        tiktokAnalyzeBtn.addEventListener('click', () => {
+            const url = tiktokUrlInput.value.trim();
+            if (url) {
+                analyzeVideo(url, tiktokLoader, tiktokResults);
+            } else {
+                alert('Please enter a valid TikTok URL.');
+            }
+        });
+    }
+
+    // Allow pressing Enter to trigger Analyze
+    instagramUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            instagramAnalyzeBtn.click();
+        }
+    });
+    youtubeUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            youtubeAnalyzeBtn.click();
+        }
+    });
+    tiktokUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            tiktokAnalyzeBtn.click();
+        }
+    });
+
+    // Function to analyze video
+    function analyzeVideo(url, loader, results) {
+        results.innerHTML = '';
+        loader.style.display = 'block';
+        results.style.display = 'none';
+        results.style.opacity = '0';
+
+        const formData = new FormData();
+        formData.append('url', url);
+
+        fetch('/analyze', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                const videoFormats = data.video_formats || [];
+                const audioAvailable = data.audio_available;
+
+                if (videoFormats.length === 0 && !audioAvailable) {
+                    results.innerHTML = `<p>No MP4 or MP3 formats available for this video.</p>`;
+                } else {
+                    results.innerHTML = generateResults(url, videoFormats, audioAvailable);
+                }
+
+                results.style.display = 'flex';
+                requestAnimationFrame(() => {
+                    results.style.opacity = '1';
+                });
+            })
+            .catch(err => {
+                loader.style.display = 'none';
+                alert('An error occurred. Please try again.');
+                console.error(err);
+            });
+    }
+
+    // Function to generate results
+    function generateResults(url, videoFormats, audioAvailable) {
+        let html = '';
+
+        videoFormats.forEach(f => {
+            const progressive = f.progressive !== false;
+            html += `
+                <div class="download-card">
+                    <h3>${f.resolution} MP4</h3>
+                    <div class="format-buttons">
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','${f.format_id}','video', ${progressive})">
+                            Download MP4 ${f.resolution}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (audioAvailable) {
+            html += `
+                <div class="download-card">
+                    <h3>MP3 (Audio Only)</h3>
+                    <div class="format-buttons">
+                        <button class="format-btn" onclick="initiateDownload(event, '${url}','','audio', true)">
+                            Download MP3
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        return html;
+    }
 
     let currentSection = homeSection;
     currentSection.classList.add('active');
@@ -82,63 +237,17 @@ document.addEventListener('DOMContentLoaded', () => {
         resetYouTube();
         showSection(youtubeSection);
     });
-    // NEW TIKTOK tab event
     tiktokTab.addEventListener('click', () => {
         resetTiktok();
         showSection(tiktokSection);
     });
 
+    // BACK BUTTONS
     backFromInstagram.addEventListener('click', () => showSection(homeSection));
     backFromYouTube.addEventListener('click', () => showSection(homeSection));
-    // NEW TIKTOK back button event
     backFromTiktok.addEventListener('click', () => showSection(homeSection));
 
-    // ALLOW ENTER KEY ON EACH INPUT
-    instagramUrlInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            instagramAnalyzeBtn.click();
-        }
-    });
-    youtubeUrlInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            youtubeAnalyzeBtn.click();
-        }
-    });
-    tiktokUrlInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            tiktokAnalyzeBtn.click();
-        }
-    });
-
-    // ANALYZE BUTTONS
-    instagramAnalyzeBtn.addEventListener('click', () => {
-        const url = instagramUrlInput.value.trim();
-        if (url) {
-            analyzeVideo(url, instagramLoader, instagramResults);
-        } else {
-            alert('Please enter a valid Instagram URL.');
-        }
-    });
-
-    youtubeAnalyzeBtn.addEventListener('click', () => {
-        const url = youtubeUrlInput.value.trim();
-        if (url) {
-            analyzeVideo(url, youtubeLoader, youtubeResults);
-        } else {
-            alert('Please enter a valid YouTube URL.');
-        }
-    });
-
-    // NEW TIKTOK analyze button
-    tiktokAnalyzeBtn.addEventListener('click', () => {
-        const url = tiktokUrlInput.value.trim();
-        if (url) {
-            analyzeVideo(url, tiktokLoader, tiktokResults);
-        } else {
-            alert('Please enter a valid TikTok URL.');
-        }
-    });
-
+    // Reset functions
     function resetInstagram() {
         instagramUrlInput.value = '';
         instagramResults.innerHTML = '';
@@ -153,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubeResults.style.opacity = '0';
     }
 
-    // NEW reset function for TIKTOK
     function resetTiktok() {
         tiktokUrlInput.value = '';
         tiktokResults.innerHTML = '';
@@ -161,87 +269,12 @@ document.addEventListener('DOMContentLoaded', () => {
         tiktokResults.style.opacity = '0';
     }
 
-    // ANALYZE VIDEO
-    function analyzeVideo(url, loader, results) {
-        results.innerHTML = '';
-        loader.style.display = 'block';
-        results.style.display = 'none';
-        results.style.opacity = '0';
-
-        const formData = new FormData();
-        formData.append('url', url);
-
-        fetch('/analyze', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            loader.style.display = 'none';
-            if (data.error) {
-                alert('Error: ' + data.error);
-                return;
-            }
-
-            const videoFormats = data.video_formats || [];
-            const audioAvailable = data.audio_available;
-
-            if (videoFormats.length === 0 && !audioAvailable) {
-                results.innerHTML = `<p>No MP4 or MP3 formats available for this video.</p>`;
-            } else {
-                results.innerHTML = generateResults(url, videoFormats, audioAvailable);
-            }
-
-            results.style.display = 'flex';
-            requestAnimationFrame(() => {
-                results.style.opacity = '1';
-            });
-        })
-        .catch(err => {
-            loader.style.display = 'none';
-            alert('An error occurred. Please try again.');
-            console.error(err);
-        });
-    }
-
-    function generateResults(url, videoFormats, audioAvailable) {
-        let html = '';
-
-        videoFormats.forEach(f => {
-            const progressive = f.progressive !== false;
-            html += `
-                <div class="download-card">
-                    <h3>${f.resolution} MP4</h3>
-                    <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload(event, '${url}','${f.format_id}','video', ${progressive})">
-                            Download MP4 ${f.resolution}
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-
-        if (audioAvailable) {
-            html += `
-                <div class="download-card">
-                    <h3>MP3 (Audio Only)</h3>
-                    <div class="format-buttons">
-                        <button class="format-btn" onclick="initiateDownload(event, '${url}','','audio', true)">
-                            Download MP3
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        return html;
-    }
-
-    // REPLACE "Downloading..." TEXT WITH A SPINNER + TEXT
+    // DOWNLOAD FUNCTION
     window.initiateDownload = function(e, url, format_id, mode, progressive) {
-        const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
+        e.preventDefault();
+        const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}`;
 
-        const btn = e.target;
+        const btn = e.currentTarget;
         const originalHTML = btn.innerHTML;
         // Show spinner while downloading
         btn.innerHTML = '<span class="download-spinner"></span> Downloading...';
