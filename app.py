@@ -88,6 +88,7 @@ def analyze():
 def download():
     url = request.args.get('url', '').strip()
     mode = request.args.get('mode', '').strip()  # 'video' or 'audio'
+    format_id = request.args.get('format_id', '').strip()
 
     if not url:
         return "No URL provided", 400
@@ -103,7 +104,7 @@ def download():
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
+            'outtmpl': os.path.join(DOWNLOAD_DIR, 'audio.%(ext)s'),
             'format': 'bestaudio',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
@@ -113,13 +114,22 @@ def download():
         }
         ext = 'mp3'
     else:
-        # Only download MP4 format without any post-processing for now
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': 'best[ext=mp4]',
-        }
+        # Download specific format if format_id is provided
+        if format_id:
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
+                'format': format_id,
+            }
+        else:
+            # Only download MP4 format without any post-processing
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
+                'format': 'best[ext=mp4]',
+            }
         ext = 'mp4'
 
     try:
@@ -151,7 +161,7 @@ def download():
 
             return send_file(
                 downloaded_file,
-                as_attachment=False,
+                as_attachment=True,
                 download_name=f"{safe_title}.{ext}",
                 mimetype=mimetype
             )
