@@ -2,25 +2,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const homeSection = document.getElementById('homeSection');
     const instagramSection = document.getElementById('instagramSection');
     const youtubeSection = document.getElementById('youtubeSection');
+    // NEW TikTok section reference
+    const tiktokSection = document.getElementById('tiktokSection');
 
     const homeTab = document.getElementById('homeTab');
     const instagramTab = document.getElementById('instagramTab');
     const youtubeTab = document.getElementById('youtubeTab');
+    // NEW TikTok tab reference
+    const tiktokTab = document.getElementById('tiktokTab');
 
     const backFromInstagram = document.getElementById('backFromInstagram');
     const backFromYouTube = document.getElementById('backFromYouTube');
+    // NEW back button for TikTok
+    const backFromTiktok = document.getElementById('backFromTiktok');
 
     const instagramUrlInput = document.getElementById('instagramUrl');
     const youtubeUrlInput = document.getElementById('youtubeUrl');
+    // NEW TikTok URL input
+    const tiktokUrlInput = document.getElementById('tiktokUrl');
 
     const instagramAnalyzeBtn = document.getElementById('instagramAnalyzeBtn');
     const youtubeAnalyzeBtn = document.getElementById('youtubeAnalyzeBtn');
+    // NEW TikTok analyze button
+    const tiktokAnalyzeBtn = document.getElementById('tiktokAnalyzeBtn');
 
     const instagramLoader = document.getElementById('instagramLoader');
     const youtubeLoader = document.getElementById('youtubeLoader');
+    // NEW TikTok loader
+    const tiktokLoader = document.getElementById('tiktokLoader');
 
     const instagramResults = document.getElementById('instagramResults');
     const youtubeResults = document.getElementById('youtubeResults');
+    // NEW TikTok results
+    const tiktokResults = document.getElementById('tiktokResults');
 
     let currentSection = homeSection;
     currentSection.classList.add('active');
@@ -68,9 +82,33 @@ document.addEventListener('DOMContentLoaded', () => {
         resetYouTube();
         showSection(youtubeSection);
     });
+    // NEW TIKTOK tab event
+    tiktokTab.addEventListener('click', () => {
+        resetTiktok();
+        showSection(tiktokSection);
+    });
 
     backFromInstagram.addEventListener('click', () => showSection(homeSection));
     backFromYouTube.addEventListener('click', () => showSection(homeSection));
+    // NEW TIKTOK back button event
+    backFromTiktok.addEventListener('click', () => showSection(homeSection));
+
+    // ALLOW ENTER KEY ON EACH INPUT
+    instagramUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            instagramAnalyzeBtn.click();
+        }
+    });
+    youtubeUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            youtubeAnalyzeBtn.click();
+        }
+    });
+    tiktokUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            tiktokAnalyzeBtn.click();
+        }
+    });
 
     // ANALYZE BUTTONS
     instagramAnalyzeBtn.addEventListener('click', () => {
@@ -91,6 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // NEW TIKTOK analyze button
+    tiktokAnalyzeBtn.addEventListener('click', () => {
+        const url = tiktokUrlInput.value.trim();
+        if (url) {
+            analyzeVideo(url, tiktokLoader, tiktokResults);
+        } else {
+            alert('Please enter a valid TikTok URL.');
+        }
+    });
+
     function resetInstagram() {
         instagramUrlInput.value = '';
         instagramResults.innerHTML = '';
@@ -103,6 +151,14 @@ document.addEventListener('DOMContentLoaded', () => {
         youtubeResults.innerHTML = '';
         youtubeResults.style.display = 'none';
         youtubeResults.style.opacity = '0';
+    }
+
+    // NEW reset function for TIKTOK
+    function resetTiktok() {
+        tiktokUrlInput.value = '';
+        tiktokResults.innerHTML = '';
+        tiktokResults.style.display = 'none';
+        tiktokResults.style.opacity = '0';
     }
 
     // ANALYZE VIDEO
@@ -181,12 +237,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
+    // REPLACE "Downloading..." TEXT WITH A SPINNER + TEXT
     window.initiateDownload = function(e, url, format_id, mode, progressive) {
         const downloadUrl = `/download?url=${encodeURIComponent(url)}&mode=${encodeURIComponent(mode)}${format_id ? '&format_id=' + encodeURIComponent(format_id) : ''}&progressive=${progressive}`;
 
         const btn = e.target;
-        const originalText = btn.innerText;
-        btn.innerText = 'Downloading...';
+        const originalHTML = btn.innerHTML;
+        // Show spinner while downloading
+        btn.innerHTML = '<span class="download-spinner"></span> Downloading...';
         btn.disabled = true;
 
         fetch(downloadUrl)
@@ -209,12 +267,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.removeChild(link);
             URL.revokeObjectURL(objectUrl);
 
-            btn.innerText = originalText;
+            // Revert button state
+            btn.innerHTML = originalHTML;
             btn.disabled = false;
         })
         .catch(err => {
             alert('Error downloading file: ' + err.message);
-            btn.innerText = originalText;
+            btn.innerHTML = originalHTML;
             btn.disabled = false;
         });
     };
