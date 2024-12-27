@@ -135,18 +135,18 @@ section.active {
 
 /* INPUT + BUTTONS */
 .input-container {
-    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    max-width: 500px; /* Increased max-width to accommodate two buttons */
-    margin: 0 auto 30px;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
 }
 
 .input-container input {
-    flex: 1;
-    padding: 12px 40px; /* Adjust padding for icons */
+    width: 280px;
+    max-width: 90%;
+    padding: 12px;
     border-radius: 30px;
     border: none;
     outline: none;
@@ -155,36 +155,45 @@ section.active {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     background: rgba(255,255,255,0.9);
     color: #333;
-    position: relative;
-    z-index: 1;
 }
 
-.input-container .paste-btn,
-.input-container .analyze-btn {
-    background: transparent;
+.analyze-btn {
+    padding: 12px 20px;
     border: none;
+    background: #fff;
+    color: #333;
+    border-radius: 30px;
     cursor: pointer;
-    padding: 0; /* Removes unnecessary spacing */
-    outline: none; /* Removes browser's default focus ring */
-    box-shadow: none; /* Ensures no shadow or transparent circle */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight: bold;
+    font-size: 1em;
+    transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }
 
-.input-container .paste-btn {
-    margin-right: 10px; /* Adjust spacing to clearly separate from search button */
+.analyze-btn:hover {
+    transform: translateY(-2px);
+    background: #eee;
+    color: #000;
 }
 
-.input-container .analyze-btn {
-    margin-left: 10px; /* Adjust spacing to clearly separate from input field */
+.back-btn {
+    margin-top: 40px;
+    padding: 12px 25px;
+    border: none;
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 1em;
+    white-space: nowrap;
 }
 
-.input-container .icon,
-.input-container .search-icon {
-    width: 24px;
-    height: 24px;
-    filter: invert(1); /* Make icons white */
+.back-btn:hover {
+    background: rgba(255,255,255,0.5);
 }
 
 /* LOADER */
@@ -200,18 +209,6 @@ section.active {
 
 @keyframes spin {
   to {transform: rotate(360deg);}
-}
-
-/* SMALL SPINNER FOR "DOWNLOADING..." */
-.download-spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid #fff;
-    border-top: 2px solid rgba(255,255,255,0.3);
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: spin 1s linear infinite;
 }
 
 /* RESULTS */
@@ -277,27 +274,6 @@ section.active {
 .format-btn:hover {
     transform: translateY(-2px);
     background: #ededed;
-}
-
-/* BACK BUTTON */
-.back-btn {
-    margin-top: 40px;
-    padding: 12px 25px;
-    border: none;
-    background: rgba(255,255,255,0.3);
-    color: #fff;
-    border-radius: 30px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s, transform 0.3s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    font-size: 1em;
-    white-space: nowrap;
-}
-
-.back-btn:hover {
-    background: rgba(255,255,255,0.5);
-    transform: translateY(-2px);
 }
 
 /* MEDIA QUERIES */
