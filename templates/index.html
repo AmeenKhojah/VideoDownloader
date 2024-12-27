@@ -11,7 +11,7 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
             <h1 class="site-title">Video Downloader</h1>
         </div>
         <nav>
@@ -19,31 +19,22 @@
                 <li><button id="homeTab" class="tab-btn">Home</button></li>
                 <li><button id="instagramTab" class="tab-btn">Instagram</button></li>
                 <li><button id="youtubeTab" class="tab-btn">YouTube</button></li>
-                <!-- NEW TikTok TAB -->
-                <li><button id="tiktokTab" class="tab-btn">TikTok</button></li>
             </ul>
         </nav>
     </header>
 
     <section class="home-section active" id="homeSection">
         <div class="home-content">
-            <h2>One click, unlimited downloads. Save Instagram, YouTube & TikTok videos effortlessly!</h2>
+            <h2>One click, unlimited downloads. Save Instagram & YouTube videos effortlessly!</h2>
         </div>
     </section>
 
     <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
-        <p class="instruction">Enter the Instagram video URL below and click the search or paste icon.</p>
+        <p class="instruction">Enter the Instagram video URL below and click "Download".</p>
         <div class="input-container">
-            <!-- PASTE BUTTON -->
-            <button class="paste-btn" id="pasteClipboardBtnInstagram">
-                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
-            </button>
             <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL...">
-            <!-- SEARCH BUTTON -->
-            <button class="analyze-btn" id="instagramAnalyzeBtn">
-                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
-            </button>
+            <button class="analyze-btn" id="instagramAnalyzeBtn">Download</button>
         </div>
         <div id="instagramLoader" class="loader" style="display:none;"></div>
         <div id="instagramResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
@@ -52,43 +43,15 @@
 
     <section class="content-section" id="youtubeSection">
         <h2>Download from YouTube</h2>
-        <p class="instruction">Enter the YouTube video URL below and click the search or paste icon.</p>
+        <p class="instruction">Enter the YouTube video URL below and click "Download".</p>
         <div class="input-container">
-            <!-- PASTE BUTTON -->
-            <button class="paste-btn" id="pasteClipboardBtnYouTube">
-                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
-            </button>
             <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL...">
-            <!-- SEARCH BUTTON -->
-            <button class="analyze-btn" id="youtubeAnalyzeBtn">
-                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
-            </button>
+            <button class="analyze-btn" id="youtubeAnalyzeBtn">Download</button>
         </div>
         <div id="youtubeLoader" class="loader" style="display:none;"></div>
         <div id="youtubeResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
         <button class="back-btn" id="backFromYouTube">Back to Home</button>
     </section>
-
-    <!-- NEW TIKTOK SECTION -->
-    <section class="content-section" id="tiktokSection">
-        <h2>Download from TikTok</h2>
-        <p class="instruction">Enter the TikTok video URL below and click the search or paste icon.</p>
-        <div class="input-container">
-            <!-- PASTE BUTTON -->
-            <button class="paste-btn" id="pasteClipboardBtnTiktok">
-                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
-            </button>
-            <input type="text" id="tiktokUrl" placeholder="Enter TikTok video URL...">
-            <!-- SEARCH BUTTON -->
-            <button class="analyze-btn" id="tiktokAnalyzeBtn">
-                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
-            </button>
-        </div>
-        <div id="tiktokLoader" class="loader" style="display:none;"></div>
-        <div id="tiktokResults" class="results" style="display:none; opacity:0; transition: opacity 0.5s;"></div>
-        <button class="back-btn" id="backFromTiktok">Back to Home</button>
-    </section>
-    <!-- END TIKTOK SECTION -->
 
     <footer>
         <p>© 2024 Ameen Khojah. All rights reserved.</p>
