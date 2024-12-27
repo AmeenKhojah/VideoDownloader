@@ -136,6 +136,7 @@ def download():
             if not downloaded_file:
                 return "File not found after download.", 500
 
+            # Keep same logic that uses the original (sanitized) title
             safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).strip()
             if not safe_title:
                 safe_title = "video"
@@ -148,7 +149,6 @@ def download():
             else:
                 mimetype = None
 
-            # Send file with inline disposition for browser preview
             return send_file(
                 downloaded_file,
                 as_attachment=False,
