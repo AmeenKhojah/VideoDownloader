@@ -11,7 +11,7 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo">
             <h1 class="site-title">Video Downloader</h1>
         </div>
         <nav>
@@ -27,18 +27,22 @@
 
     <section class="home-section active" id="homeSection">
         <div class="home-content">
-            <h2>One click, unlimited downloads. Save Instagram & YouTube videos effortlessly!</h2>
+            <h2>One click, unlimited downloads. Save Instagram, YouTube & TikTok videos effortlessly!</h2>
         </div>
     </section>
 
     <section class="content-section" id="instagramSection">
         <h2>Download from Instagram</h2>
-        <p class="instruction">Enter the Instagram video URL below and click the search icon or press Enter.</p>
+        <p class="instruction">Enter the Instagram video URL below and click the search or paste icon.</p>
         <div class="input-container">
+            <!-- PASTE BUTTON -->
+            <button class="paste-btn" id="pasteClipboardBtnInstagram">
+                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
+            </button>
             <input type="text" id="instagramUrl" placeholder="Enter Instagram video URL...">
-            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <!-- SEARCH BUTTON -->
             <button class="analyze-btn" id="instagramAnalyzeBtn">
-                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
             </button>
         </div>
         <div id="instagramLoader" class="loader" style="display:none;"></div>
@@ -48,12 +52,16 @@
 
     <section class="content-section" id="youtubeSection">
         <h2>Download from YouTube</h2>
-        <p class="instruction">Enter the YouTube video URL below and click the search icon or press Enter.</p>
+        <p class="instruction">Enter the YouTube video URL below and click the search or paste icon.</p>
         <div class="input-container">
+            <!-- PASTE BUTTON -->
+            <button class="paste-btn" id="pasteClipboardBtnYouTube">
+                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
+            </button>
             <input type="text" id="youtubeUrl" placeholder="Enter YouTube video URL...">
-            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <!-- SEARCH BUTTON -->
             <button class="analyze-btn" id="youtubeAnalyzeBtn">
-                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
             </button>
         </div>
         <div id="youtubeLoader" class="loader" style="display:none;"></div>
@@ -64,12 +72,16 @@
     <!-- NEW TIKTOK SECTION -->
     <section class="content-section" id="tiktokSection">
         <h2>Download from TikTok</h2>
-        <p class="instruction">Enter the TikTok video URL below and click the search icon or press Enter.</p>
+        <p class="instruction">Enter the TikTok video URL below and click the search or paste icon.</p>
         <div class="input-container">
+            <!-- PASTE BUTTON -->
+            <button class="paste-btn" id="pasteClipboardBtnTiktok">
+                <img src="{{ url_for('static', filename='images/clipboard.svg') }}" alt="Paste" class="icon">
+            </button>
             <input type="text" id="tiktokUrl" placeholder="Enter TikTok video URL...">
-            <!-- REPLACED THE "Download" TEXT WITH A WHITE SEARCH ICON -->
+            <!-- SEARCH BUTTON -->
             <button class="analyze-btn" id="tiktokAnalyzeBtn">
-                <img src="{{ url_for('static', filename='search.svg') }}" alt="Search" class="search-icon">
+                <img src="{{ url_for('static', filename='images/search.svg') }}" alt="Search" class="search-icon">
             </button>
         </div>
         <div id="tiktokLoader" class="loader" style="display:none;"></div>
