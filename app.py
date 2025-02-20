@@ -8,6 +8,31 @@ app = Flask(__name__)
 DOWNLOAD_DIR = os.path.join(tempfile.gettempdir(), 'video_downloader')
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
+def get_ydl_opts(url, download=False, format_str=None):
+    """
+    Returns yt_dlp options. If the URL is for Instagram, adds login credentials.
+    """
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': not download,
+    }
+    
+    # Automatically add Instagram login credentials if URL is for Instagram
+    if 'instagram.com' in url:
+        # Using the provided credentials:
+        # Instagram email: therealpeekinq@gmail.com (if needed), username: therealpeekinq, password: Nabil123
+        ydl_opts['username'] = 'therealpeekinq'
+        ydl_opts['password'] = 'Nabil123'
+        # Some cases might require the email; uncomment the next line if necessary.
+        # ydl_opts['email'] = 'therealpeekinq@gmail.com'
+    
+    # For downloads, allow passing a specific format if provided
+    if download and format_str:
+        ydl_opts['format'] = format_str
+
+    return ydl_opts
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -18,18 +43,14 @@ def analyze():
     if not url:
         return jsonify({'error': 'No URL provided'}), 400
 
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-    }
-
+    ydl_opts = get_ydl_opts(url, download=False)
+    
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             formats = info.get('formats', [])
 
-            # Check audio availability
+            # Determine audio availability
             audio_format = None
             best_audio_bitrate = 0.0
             for f in formats:
@@ -39,6 +60,7 @@ def analyze():
                         best_audio_bitrate = abr
                         audio_format = f
 
+            # Process video formats into two groups
             progressive_formats = {}
             separate_videos = {}
             for f in formats:
@@ -50,7 +72,7 @@ def analyze():
                     resolution = f"{height}p"
                     tbr = f.get('tbr', 0.0) or 0.0
                     if (ext == 'mp4' and vcodec != 'none' and acodec != 'none' and '+' not in f.get('format_id', '')):
-                        # Progressive MP4
+                        # Progressive MP4 format
                         if (resolution not in progressive_formats) or (tbr > progressive_formats[resolution]['tbr']):
                             progressive_formats[resolution] = {
                                 'format_id': f['format_id'],
@@ -59,6 +81,7 @@ def analyze():
                                 'progressive': True
                             }
                     else:
+                        # Video-only streams (separate video)
                         if vcodec != 'none' and acodec == 'none':
                             if (resolution not in separate_videos) or (tbr > separate_videos[resolution]['tbr']):
                                 separate_videos[resolution] = {
@@ -73,7 +96,8 @@ def analyze():
                 if res not in progressive_formats:
                     chosen_formats.append(vid)
 
-            chosen_formats.sort(key=lambda x: int(x['resolution'].replace('p','')), reverse=True)
+            # Sort formats by resolution (highest first)
+            chosen_formats.sort(key=lambda x: int(x['resolution'].replace('p', '')), reverse=True)
 
             response = {
                 'video_formats': chosen_formats,
@@ -88,21 +112,21 @@ def analyze():
 def download():
     url = request.args.get('url', '').strip()
     mode = request.args.get('mode', '').strip()  # 'video' or 'audio'
+    format_id = request.args.get('format_id', '').strip()
 
     if not url:
         return "No URL provided", 400
 
-    # Clean old files
+    # Remove any old files from the download directory
     for f in os.listdir(DOWNLOAD_DIR):
         file_path = os.path.join(DOWNLOAD_DIR, f)
         if os.path.isfile(file_path):
             os.remove(file_path)
 
     if mode == 'audio':
-        # MP3 Audio
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
+        # Download audio and convert to MP3
+        ydl_opts = get_ydl_opts(url, download=True)
+        ydl_opts.update({
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
             'format': 'bestaudio',
             'postprocessors': [{
@@ -110,16 +134,18 @@ def download():
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
-        }
+        })
         ext = 'mp3'
     else:
-        # Only download MP4 format without any post-processing for now
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
+        # Download video. If a format_id is provided, use it; otherwise, use the best MP4 available.
+        if format_id:
+            format_str = format_id
+        else:
+            format_str = 'best[ext=mp4]'
+        ydl_opts = get_ydl_opts(url, download=True, format_str=format_str)
+        ydl_opts.update({
             'outtmpl': os.path.join(DOWNLOAD_DIR, 'video.%(ext)s'),
-            'format': 'best[ext=mp4]',
-        }
+        })
         ext = 'mp4'
 
     try:
@@ -140,15 +166,8 @@ def download():
             if not safe_title:
                 safe_title = "video"
 
-            # Set mimetype explicitly for iOS compatibility
-            if ext == 'mp4':
-                mimetype = 'video/mp4'
-            elif ext == 'mp3':
-                mimetype = 'audio/mpeg'
-            else:
-                mimetype = None
+            mimetype = 'video/mp4' if ext == 'mp4' else 'audio/mpeg'
 
-            # Send file with inline disposition for browser preview
             return send_file(
                 downloaded_file,
                 as_attachment=False,
@@ -161,5 +180,4 @@ def download():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Ensure ffmpeg is installed on your server (e.g., `sudo apt-get install ffmpeg`)
     app.run(host="0.0.0.0", port=port, debug=False)
